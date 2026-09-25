@@ -1,0 +1,19 @@
+:root {
+  color-scheme: dark;
+
+  /* Surfaces and text */
+  --bg: #0b0d12;
+  --surface: #141821;
+  --surface-2: #1c2230;
+  --text: #e6e8ee;
+  --text-muted: #7a8194;
+  --line: #2a3142;
+
+  /* Function colours: a note's role in the primary key or focus chord */
+  --fn-root: #f5b84a;
+  --fn-third: #4fc3f7;
+  --fn-fifth: #9c7cf4;
+  --fn-seventh: #f06292;
+  --fn-other: #727b90;
+  --fn-outside-opacity: 0.2;
+}

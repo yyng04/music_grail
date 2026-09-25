@@ -1,0 +1,5 @@
+dist
+test-results
+playwright-report
+tests/e2e/__screenshots__
+package-lock.json
