@@ -6,10 +6,12 @@ import {
   detectChords,
   fromTonalInterval,
   intervalBetween,
+  isStandardKey,
   keySignature,
   notesFromDegrees,
   relativeMinor,
   scaleNotes,
+  standardKey,
   toTonalInterval,
   transpose,
 } from "../../src/theory/index.ts";
@@ -122,5 +124,42 @@ describe("chords", () => {
 
   it("gives chord intervals quality-first", () => {
     expect(chordInfo("Gm7")?.intervals).toEqual(["P1", "m3", "P5", "m7"]);
+  });
+});
+
+describe("standard keys", () => {
+  const majors = "C G D A E B F# C# F Bb Eb Ab Db Gb Cb".split(" ");
+  const minors = "A E B F# C# G# D# A# D G C F Bb Eb Ab".split(" ");
+
+  it.each(majors)("%s major is standard", (tonic) => {
+    expect(isStandardKey({ tonic, kind: "major" })).toBe(true);
+    expect(standardKey({ tonic, kind: "major" })).toEqual({
+      tonic,
+      kind: "major",
+    });
+  });
+
+  it.each(minors)("%s minor is standard", (tonic) => {
+    expect(isStandardKey({ tonic, kind: "minor" })).toBe(true);
+    expect(standardKey({ tonic, kind: "minor" })).toEqual({
+      tonic,
+      kind: "minor",
+    });
+  });
+
+  it.each([
+    ["D#", "major", "Eb"],
+    ["G#", "major", "Ab"],
+    ["A#", "major", "Bb"],
+    ["E#", "major", "F"],
+    ["B#", "major", "C"],
+    ["Fb", "major", "E"],
+    ["Cbb", "major", "Bb"],
+    ["Fb", "minor", "E"],
+    ["G#", "lydian", "Ab"],
+    ["A#", "dorian", "Bb"],
+  ] as const)("%s %s is rewritten as %s %s", (tonic, kind, standard) => {
+    expect(isStandardKey({ tonic, kind })).toBe(false);
+    expect(standardKey({ tonic, kind })).toEqual({ tonic: standard, kind });
   });
 });

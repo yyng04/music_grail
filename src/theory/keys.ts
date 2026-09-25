@@ -1,4 +1,4 @@
-import { Key, Mode, Scale } from "tonal";
+import { Key, Mode, Note, Scale } from "tonal";
 import { isPitchClass } from "./notes.ts";
 import { KINDS, type Kind, type Target } from "./types.ts";
 
@@ -52,6 +52,27 @@ export function keySignature(
   const accidental = alteration > 0 ? "#" : alteration < 0 ? "b" : "";
   const count = Math.abs(alteration);
   return { count, accidental, label: `${String(count)}${accidental}` };
+}
+
+/** One of the 15 standard keys: its parent major key has at most 7 sharps or flats. */
+export function isStandardKey(target: Pick<Target, "tonic" | "kind">): boolean {
+  return keySignature(target).count <= 7;
+}
+
+/**
+ * The same pitches spelled as a standard key: D# major → Eb major,
+ * G# lydian → Ab lydian. A standard key is returned unchanged.
+ */
+export function standardKey<T extends Pick<Target, "tonic" | "kind">>(
+  target: T,
+): T {
+  if (isStandardKey(target)) return target;
+  const simplest = Note.simplify(target.tonic);
+  for (const tonic of [simplest, Note.enharmonic(simplest)]) {
+    if (isStandardKey({ tonic, kind: target.kind }))
+      return { ...target, tonic };
+  }
+  return target;
 }
 
 export function relativeMinor(majorTonic: string): Target {
