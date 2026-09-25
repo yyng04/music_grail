@@ -90,6 +90,37 @@ describe("URL hash", () => {
   });
 });
 
+describe("theoretical keys in the URL", () => {
+  it("rewrites D# major as Eb major with a warning", () => {
+    expect(parseHash("p=Ds-major")).toEqual({
+      value: { primary: { tonic: "Eb", kind: "major" } },
+      warnings: ["Rewriting D# major as Eb major: not a standard key"],
+    });
+  });
+
+  it("respells the focus chord with the key", () => {
+    const { value, warnings } = parseHash("p=Gs-major&pchord=Gs-maj7");
+    expect(value.primary).toEqual({
+      tonic: "Ab",
+      kind: "major",
+      chord: "Abmaj7",
+    });
+    expect(warnings).toHaveLength(1);
+  });
+
+  it("rewrites the compare key too", () => {
+    const { value } = parseHash("p=C-major&c=Fb-major");
+    expect(value.compare).toEqual({ tonic: "E", kind: "major" });
+  });
+
+  it("keeps a standard key with sharps, such as D# minor", () => {
+    expect(parseHash("p=Ds-minor")).toEqual({
+      value: { primary: { tonic: "D#", kind: "minor" } },
+      warnings: [],
+    });
+  });
+});
+
 describe("store", () => {
   it("starts on C major with 7th chords and audio off", () => {
     const state = createAppStore().getState();
@@ -126,6 +157,17 @@ describe("store", () => {
     const store = createAppStore();
     store.getState().setFocusChord("primary", "D7");
     expect(store.getState().selection.primary.chord).toBeUndefined();
+    expect(warn).toHaveBeenCalledOnce();
+  });
+
+  it("rewrites a theoretical key with a warning", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const store = createAppStore();
+    store.getState().setPrimary({ tonic: "D#", kind: "major" });
+    expect(store.getState().selection.primary).toEqual({
+      tonic: "Eb",
+      kind: "major",
+    });
     expect(warn).toHaveBeenCalledOnce();
   });
 

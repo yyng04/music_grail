@@ -21,3 +21,17 @@ test("drops a non-diatonic chord from the URL with a warning", async ({
   await expect(page).toHaveURL(/#p=C-major$/);
   expect(warnings).toEqual(["Ignoring chord D7: not diatonic to C major"]);
 });
+
+test("rewrites a theoretical key from the URL with a warning", async ({
+  page,
+}) => {
+  const warnings: string[] = [];
+  page.on("console", (msg) => {
+    if (msg.type() === "warning") warnings.push(msg.text());
+  });
+  await page.goto("./#p=Ds-major");
+  await expect(page).toHaveURL(/#p=Eb-major$/);
+  expect(warnings).toEqual([
+    "Rewriting D# major as Eb major: not a standard key",
+  ]);
+});
