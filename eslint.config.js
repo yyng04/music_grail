@@ -25,6 +25,20 @@ export default defineConfig([
     },
   },
   {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/theory/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            { name: "tonal", message: "Only src/theory/ imports tonal." },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["**/*.js"],
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.node },
