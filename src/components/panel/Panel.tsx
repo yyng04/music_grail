@@ -15,15 +15,18 @@ export function Panel() {
       <svg className="sparkle" viewBox="0 0 34 34" aria-hidden="true">
         <path d="M17 0v34M0 17h34M5 5l24 24M29 5 5 29" />
       </svg>
-      <div>
-        <h2 className={`key-name${kind.includes(" ") ? " long" : ""}`}>
-          <Spelled text={primary.tonic} /> <span className="kind">{kind}</span>
-        </h2>
-        <p className="key-meta">
-          <Spelled text={keyMeta(primary)} />
-        </p>
+      <div className="panel-key">
+        <div>
+          <h2 className={`key-name${kind.includes(" ") ? " long" : ""}`}>
+            <Spelled text={primary.tonic} />{" "}
+            <span className="kind">{kind}</span>
+          </h2>
+          <p className="key-meta">
+            <Spelled text={keyMeta(primary)} />
+          </p>
+        </div>
+        <NoteRow />
       </div>
-      <NoteRow />
       <CompareBlock />
       <ChordList />
     </section>

@@ -7,17 +7,27 @@ export function Header() {
   const clearCompare = useAppStore((s) => s.clearCompare);
   const audioEnabled = useAppStore((s) => s.audioEnabled);
   const setAudioEnabled = useAppStore((s) => s.setAudioEnabled);
+  const view = useAppStore((s) => s.view);
+  const setView = useAppStore((s) => s.setView);
   return (
     <header className="header">
       <h1 className="brand">Music Theory Centre</h1>
       <nav className="tabs" aria-label="Views">
-        <button type="button" aria-current="page">
+        <button
+          type="button"
+          aria-current={view === "circle" ? "page" : undefined}
+          onClick={() => {
+            setView("circle");
+          }}
+        >
           Circle
         </button>
         <button
           type="button"
-          disabled
-          title="The fretboard arrives in the next milestone"
+          aria-current={view === "fretboard" ? "page" : undefined}
+          onClick={() => {
+            setView("fretboard");
+          }}
         >
           Fretboard
         </button>
