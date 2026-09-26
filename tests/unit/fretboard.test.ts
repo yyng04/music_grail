@@ -12,6 +12,7 @@ import {
   parseView,
   startHashSync,
 } from "../../src/state/index.ts";
+import { boardGeometry } from "../../src/views/fretboard/geometry.ts";
 import {
   fretPitch,
   INSTRUMENTS,
@@ -310,5 +311,36 @@ describe("views", () => {
     expect(s()).toMatchObject({ view: "circle", compareArmed: true });
     s().setCompare({ tonic: "F", kind: "major" });
     expect(s()).toMatchObject({ view: "circle", compareArmed: false });
+  });
+});
+
+describe("board geometry", () => {
+  const geometry = (upright: boolean) =>
+    boardGeometry({
+      viewWidth: upright ? 358 : 1344,
+      strings: 6,
+      frets: 24,
+      compact: upright,
+      upright,
+      leftHanded: false,
+    });
+  const lengths = (g: ReturnType<typeof geometry>) =>
+    Array.from({ length: 24 }, (_, i) => g.fret(i + 1) - g.fret(i));
+
+  it("keeps real proportions lying down: each fret 2^(-1/12) of the one before", () => {
+    const l = lengths(geometry(false));
+    for (let i = 1; i < l.length; i++)
+      expect((l[i] ?? 0) / (l[i - 1] ?? 1)).toBeCloseTo(
+        Math.pow(2, -1 / 12),
+        6,
+      );
+  });
+
+  it("never makes an upright fret shorter than a dot plus a gap", () => {
+    const g = geometry(true);
+    expect(Math.min(...lengths(g))).toBeGreaterThanOrEqual(
+      g.dotSize(24) + 6 - 1e-9,
+    );
+    expect(g.dotSize(24)).toBe(30);
   });
 });
