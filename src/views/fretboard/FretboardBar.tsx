@@ -70,7 +70,9 @@ export function FretboardBar({ upright }: { upright: boolean }) {
   const set = (patch: Partial<FretboardSettings>) => {
     setFretboard(patch);
   };
-  const chord = selection.primary.chord;
+  // The focus line describes the scale view; shape modes say what they show below.
+  const mode = useAppStore((s) => s.shapes.mode);
+  const chord = mode === "scale" ? selection.primary.chord : undefined;
   const counted =
     settings.label === "degree" || settings.label === "interval"
       ? labelReference(selection)

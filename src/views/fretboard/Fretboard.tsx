@@ -11,6 +11,10 @@ import {
 import { useAppStore } from "../../state/index.ts";
 import { midi, octave, tuning } from "../../theory/index.ts";
 import { FretboardBar } from "./FretboardBar.tsx";
+import { ShapeBoard } from "./ShapeBoard.tsx";
+import { useShapes } from "./shapeModel.ts";
+import { ShapeStrip } from "./ShapeStrip.tsx";
+import { ShowList } from "./ShowList.tsx";
 import {
   boardGeometry,
   DOUBLE_INLAYS,
@@ -91,6 +95,13 @@ export function Fretboard() {
     [selection, strings, settings.frets],
   );
   const hasCompare = Boolean(selection.compare);
+  const shapes = useShapes();
+  const setShapes = useAppStore((s) => s.setShapes);
+  const { built } = shapes;
+  // Shape modes and positions draw on the shape board; the plain scale keeps this one.
+  const shapeView = shapes.st.mode !== "scale" || shapes.st.position !== null;
+  const names = built.positions.map((p) => p.name);
+  const at0 = shapes.st.position ? names.indexOf(shapes.st.position) : -1;
 
   // A left-handed board lying down starts scrolled to its nut, on the right.
   useLayoutEffect(() => {
@@ -123,7 +134,32 @@ export function Fretboard() {
   return (
     <div className={`fretboard${upright ? " upright" : ""}`}>
       <FretboardBar upright={upright} />
-      <div className="board-scroll" ref={scroller}>
+      {upright && <ShowList built={built} />}
+      <ShapeStrip
+        built={built}
+        strings={count}
+        frets={settings.frets}
+        scaleDots={shapes.scaleDots}
+      />
+      {shapeView && (
+        <ShapeBoard
+          strings={strings}
+          frets={settings.frets}
+          layer={built.layer}
+          position={built.position}
+          positions={built.positions}
+          leftHanded={settings.leftHanded}
+          lowOnTop={settings.lowOnTop}
+          label={settings.label}
+          onStep={(step) => {
+            setShapes({
+              position: names[at0 + step] ?? shapes.st.position,
+              shape: 0,
+            });
+          }}
+        />
+      )}
+      <div className="board-scroll" ref={scroller} hidden={shapeView}>
         <div
           className="board"
           role="group"
