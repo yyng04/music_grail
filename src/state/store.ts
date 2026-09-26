@@ -6,6 +6,8 @@ import type { HashView } from "./hash.ts";
 import {
   checkFretboard,
   DEFAULT_FRETBOARD,
+  DEFAULT_SHAPES,
+  type ShapeState,
   loadFretboard,
   saveFretboard,
   type FretboardSettings,
@@ -32,6 +34,7 @@ export type AppState = {
   columnSpellings: ColumnSpellings;
   view: View;
   fretboard: FretboardSettings;
+  shapes: ShapeState;
 
   setPrimary: (target: Target) => void;
   setCompare: (target: Target) => void;
@@ -50,6 +53,7 @@ export type AppState = {
   toggleColumnSpelling: (column: number) => void;
   setView: (view: View) => void;
   setFretboard: (settings: Partial<FretboardSettings>) => void;
+  setShapes: (patch: Partial<ShapeState>) => void;
 };
 
 function warnAll(warnings: readonly string[]) {
@@ -74,6 +78,7 @@ export function createAppStore(
     columnSpellings: {},
     view: "circle",
     fretboard,
+    shapes: DEFAULT_SHAPES,
 
     setPrimary: (target) => {
       set({ selection: { ...get().selection, primary: checked(target) } });
@@ -135,6 +140,10 @@ export function createAppStore(
     setView: (view) => {
       set({ view });
     },
+    setShapes: (patch) => {
+      set({ shapes: { ...get().shapes, ...patch } });
+    },
+    // A new key or chord starts the shape stepping again from the lowest shape.
     setFretboard: (settings) => {
       set({ fretboard: checkFretboard({ ...get().fretboard, ...settings }) });
     },

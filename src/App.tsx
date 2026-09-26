@@ -7,6 +7,7 @@ import { columns, stepKey } from "./relations/index.ts";
 import { appStore, useAppStore } from "./state/index.ts";
 import { CircleOfFifths } from "./views/circle/CircleOfFifths.tsx";
 import { Fretboard } from "./views/fretboard/Fretboard.tsx";
+import { FretboardPanel } from "./views/fretboard/FretboardPanel.tsx";
 
 /** Arrow keys move the primary key round the circle; Esc cancels compare (§3, §4.4). */
 function useKeyboard() {
@@ -49,7 +50,7 @@ export function App() {
         {view === "fretboard" ? (
           <main className="main board-view">
             <Fretboard />
-            <Panel />
+            <FretboardPanel />
           </main>
         ) : (
           <main className="main">

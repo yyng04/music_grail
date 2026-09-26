@@ -4,3 +4,4 @@ export * from "./diatonic.ts";
 export * from "./circle.ts";
 export * from "./panel.ts";
 export * from "./fretboard.ts";
+export * from "./shapes.ts";

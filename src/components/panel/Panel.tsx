@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { keyMeta } from "../../relations/index.ts";
 import { useAppStore } from "../../state/index.ts";
 import { Spelled } from "../Spelled.tsx";
@@ -7,7 +8,7 @@ import { CompareBlock } from "./CompareBlock.tsx";
 import { NoteRow } from "./NoteRow.tsx";
 
 /** The selection spelled out: key, notes with roles and degrees, compare, chords (§4.4). */
-export function Panel() {
+export function Panel({ show }: { show?: ReactNode }) {
   const primary = useAppStore((s) => s.selection.primary);
   const kind = kindLabel(primary.kind);
   return (
@@ -27,8 +28,20 @@ export function Panel() {
         </div>
         <NoteRow />
       </div>
-      <CompareBlock />
-      <ChordList />
+      {show ? (
+        <>
+          {show}
+          <div className="panel-side">
+            <CompareBlock />
+            <ChordList />
+          </div>
+        </>
+      ) : (
+        <>
+          <CompareBlock />
+          <ChordList />
+        </>
+      )}
     </section>
   );
 }

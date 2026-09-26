@@ -1,3 +1,4 @@
+import type { ShapeRole } from "../relations/index.ts";
 import { instrument, type InstrumentId } from "../theory/index.ts";
 
 export type DotLabel = "note" | "degree" | "interval" | "none";
@@ -71,3 +72,35 @@ export function saveFretboard(settings: FretboardSettings): void {
     // Storage can be blocked (private windows); the settings still apply for this visit.
   }
 }
+
+export type Mode = "scale" | "triads" | "two" | "guide";
+export type Harmony = "3rds" | "6ths" | "4ths" | "octaves";
+
+/** The Show and Position controls (§5.2b). Kept for the visit only. */
+export type ShapeState = {
+  mode: Mode;
+  /** CAGED letter, or null for the whole neck. */
+  position: string | null;
+  /** Triads: index into the string sets (strings 1 2 3 first). */
+  set: number;
+  /** Index of the lit shape among those shown. */
+  shape: number;
+  two: "pairs" | "harmony";
+  pair: [ShapeRole, ShapeRole];
+  harmony: Harmony;
+  /** Harmony: the string pair, by string numbers ("2 3"). */
+  strings2: string;
+  /** Guide tones: the chord moved to; unset means the chord a 5th below. */
+  next?: string;
+};
+
+export const DEFAULT_SHAPES: ShapeState = {
+  mode: "scale",
+  position: null,
+  set: 0,
+  shape: 0,
+  two: "pairs",
+  pair: ["third", "seventh"],
+  harmony: "3rds",
+  strings2: "2 3",
+};
