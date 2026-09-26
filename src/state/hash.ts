@@ -77,13 +77,27 @@ export function decodeChord(text: string): string | undefined {
   return chordInfo(`${root}${parts[1]}`)?.symbol;
 }
 
-export function formatHash(selection: Selection): string {
+/** Views other than the circle (the default) are named in the hash, so a link opens the same view. */
+const VIEWS = ["circle", "fretboard"] as const;
+export type HashView = (typeof VIEWS)[number];
+
+export function formatHash(
+  selection: Selection,
+  view: HashView = "circle",
+): string {
   const { primary, compare } = selection;
   const params: [string, string][] = [["p", encodeKey(primary)]];
   if (primary.chord) params.push(["pchord", encodeChord(primary.chord)]);
   if (compare) params.push(["c", encodeKey(compare)]);
   if (compare?.chord) params.push(["cchord", encodeChord(compare.chord)]);
+  if (view !== "circle") params.push(["view", view]);
   return params.map(([k, v]) => `${k}=${v}`).join("&");
+}
+
+/** The view named in a hash; the circle when it names none or an unknown one. */
+export function parseView(hash: string): HashView {
+  const name = new URLSearchParams(hash.replace(/^#/, "")).get("view");
+  return VIEWS.find((v) => v === name) ?? "circle";
 }
 
 /** Parses a hash (with or without "#"). Anything invalid is dropped with a warning. */

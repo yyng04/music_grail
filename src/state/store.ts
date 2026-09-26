@@ -2,6 +2,14 @@ import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 import { columnOf, columns, type ColumnSpellings } from "../relations/index.ts";
 import { enharmonicKey, type Selection, type Target } from "../theory/index.ts";
+import type { HashView } from "./hash.ts";
+import {
+  checkFretboard,
+  DEFAULT_FRETBOARD,
+  loadFretboard,
+  saveFretboard,
+  type FretboardSettings,
+} from "./fretboard.ts";
 import {
   checkSelection,
   checkTarget,
@@ -10,6 +18,7 @@ import {
 } from "./selection.ts";
 
 export type Slot = "primary" | "compare";
+export type View = HashView;
 
 export type AppState = {
   selection: Selection;
@@ -21,6 +30,8 @@ export type AppState = {
   compareArmed: boolean;
   /** Spelling chosen with the enharmonic toggle for columns no selected key is in. */
   columnSpellings: ColumnSpellings;
+  view: View;
+  fretboard: FretboardSettings;
 
   setPrimary: (target: Target) => void;
   setCompare: (target: Target) => void;
@@ -37,6 +48,8 @@ export type AppState = {
    * spelling and respells the selected keys in that column with it.
    */
   toggleColumnSpelling: (column: number) => void;
+  setView: (view: View) => void;
+  setFretboard: (settings: Partial<FretboardSettings>) => void;
 };
 
 function warnAll(warnings: readonly string[]) {
@@ -50,13 +63,17 @@ function checked(target: Target): Target {
   return result.value;
 }
 
-export function createAppStore() {
+export function createAppStore(
+  fretboard: FretboardSettings = DEFAULT_FRETBOARD,
+) {
   return createStore<AppState>()((set, get) => ({
     selection: DEFAULT_SELECTION,
     sevenths: true,
     audioEnabled: false,
     compareArmed: false,
     columnSpellings: {},
+    view: "circle",
+    fretboard,
 
     setPrimary: (target) => {
       set({ selection: { ...get().selection, primary: checked(target) } });
@@ -115,12 +132,21 @@ export function createAppStore() {
         selection: compare ? { primary, compare } : { primary },
       });
     },
+    setView: (view) => {
+      set({ view });
+    },
+    setFretboard: (settings) => {
+      set({ fretboard: checkFretboard({ ...get().fretboard, ...settings }) });
+    },
   }));
 }
 
 export type AppStore = ReturnType<typeof createAppStore>;
 
-export const appStore = createAppStore();
+export const appStore = createAppStore(loadFretboard());
+appStore.subscribe((state, previous) => {
+  if (state.fretboard !== previous.fretboard) saveFretboard(state.fretboard);
+});
 
 export function useAppStore<T>(selector: (state: AppState) => T): T {
   return useStore(appStore, selector);
