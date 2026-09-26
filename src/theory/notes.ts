@@ -25,3 +25,8 @@ export function samePitch(a: string, b: string): boolean {
 export function letter(name: string): string {
   return Note.get(name).letter;
 }
+
+/** Octave number of a note with octave: "B#3" → 3. */
+export function octave(name: string): number | undefined {
+  return Note.get(name).oct;
+}
