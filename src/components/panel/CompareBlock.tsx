@@ -2,6 +2,7 @@ import { compareSummary } from "../../relations/index.ts";
 import { useAppStore } from "../../state/index.ts";
 import { Spelled } from "../Spelled.tsx";
 import { chordLabel, targetName } from "../spelling.ts";
+import { KeyPicker } from "./KeyPicker.tsx";
 
 const WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven"];
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -15,6 +16,10 @@ export function CompareBlock() {
   const armed = useAppStore((s) => s.compareArmed);
   const armCompare = useAppStore((s) => s.armCompare);
   const clearCompare = useAppStore((s) => s.clearCompare);
+  const view = useAppStore((s) => s.view);
+
+  // The circle is the key picker on its own view; elsewhere a grid of keys stands in.
+  if (armed && view !== "circle") return <KeyPicker />;
 
   if (!compare)
     return (

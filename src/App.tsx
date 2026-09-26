@@ -4,8 +4,9 @@ import { Header } from "./components/Header.tsx";
 import { Panel } from "./components/panel/Panel.tsx";
 import { useAmbientPause } from "./hooks/useAmbientPause.ts";
 import { columns, stepKey } from "./relations/index.ts";
-import { appStore } from "./state/index.ts";
+import { appStore, useAppStore } from "./state/index.ts";
 import { CircleOfFifths } from "./views/circle/CircleOfFifths.tsx";
+import { Fretboard } from "./views/fretboard/Fretboard.tsx";
 
 /** Arrow keys move the primary key round the circle; Esc cancels compare (§3, §4.4). */
 function useKeyboard() {
@@ -39,17 +40,25 @@ function useKeyboard() {
 export function App() {
   useAmbientPause();
   useKeyboard();
+  const view = useAppStore((s) => s.view);
   return (
     <>
       <Background />
       <div className="app">
         <Header />
-        <main className="main">
-          <div className="stage">
-            <CircleOfFifths />
-          </div>
-          <Panel />
-        </main>
+        {view === "fretboard" ? (
+          <main className="main board-view">
+            <Fretboard />
+            <Panel />
+          </main>
+        ) : (
+          <main className="main">
+            <div className="stage">
+              <CircleOfFifths />
+            </div>
+            <Panel />
+          </main>
+        )}
       </div>
     </>
   );

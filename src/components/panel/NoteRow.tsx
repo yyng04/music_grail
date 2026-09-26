@@ -17,7 +17,15 @@ const MEMBERSHIP_WORD = {
   none: "",
 } as const;
 
-function Note({ note, hasCompare }: { note: RowNote; hasCompare: boolean }) {
+function Note({
+  note,
+  hasCompare,
+  showDegree,
+}: {
+  note: RowNote;
+  hasCompare: boolean;
+  showDegree: boolean;
+}) {
   const tone = isChordTone(note.role) && note.membership !== "compare";
   const role = tone ? ROLE_WORD[note.role as keyof typeof ROLE_WORD] : "";
   const where =
@@ -27,7 +35,12 @@ function Note({ note, hasCompare }: { note: RowNote; hasCompare: boolean }) {
   return (
     <li
       className={`note${tone ? ` r-${note.role}` : ""}`}
-      aria-label={[note.name, role, `degree ${note.degree}`, where]
+      aria-label={[
+        note.name,
+        role,
+        showDegree ? `degree ${note.degree}` : "",
+        where,
+      ]
         .filter(Boolean)
         .join(", ")}
     >
@@ -40,9 +53,11 @@ function Note({ note, hasCompare }: { note: RowNote; hasCompare: boolean }) {
       <span className="note-role" aria-hidden="true">
         {role}
       </span>
-      <span className="note-degree" aria-hidden="true">
-        <Spelled text={note.degree} />
-      </span>
+      {showDegree && (
+        <span className="note-degree" aria-hidden="true">
+          <Spelled text={note.degree} />
+        </span>
+      )}
     </li>
   );
 }
@@ -51,6 +66,9 @@ function Note({ note, hasCompare }: { note: RowNote; hasCompare: boolean }) {
 export function NoteRow() {
   const selection = useAppStore((s) => s.selection);
   const hasCompare = Boolean(selection.compare);
+  // With a focus chord, colours and role words follow the chord; the key's
+  // degree numbers would be a second numbering, so they are left out.
+  const showDegree = !selection.primary.chord;
   const row = noteRow(selection);
   const items = [];
   for (let i = 0; i < row.length; i++) {
@@ -64,14 +82,21 @@ export function NoteRow() {
             {note.change.halfStep ? "half step" : "changes"}
           </span>
           <ul className="pair-notes">
-            <Note note={note} hasCompare={hasCompare} />
-            <Note note={next} hasCompare={hasCompare} />
+            <Note note={note} hasCompare={hasCompare} showDegree={showDegree} />
+            <Note note={next} hasCompare={hasCompare} showDegree={showDegree} />
           </ul>
         </li>,
       );
       i++;
     } else
-      items.push(<Note key={note.name} note={note} hasCompare={hasCompare} />);
+      items.push(
+        <Note
+          key={note.name}
+          note={note}
+          hasCompare={hasCompare}
+          showDegree={showDegree}
+        />,
+      );
   }
   return (
     <ul

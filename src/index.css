@@ -204,6 +204,11 @@ ol {
   stroke: var(--text);
   stroke-width: 1;
 }
+.panel-key {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
 .key-name {
   font-weight: 200;
   font-size: clamp(56px, 6vw, 88px);
@@ -390,6 +395,60 @@ ol {
 }
 .card-key .dash-mark {
   border: 1.5px dashed var(--flip-ink-soft);
+}
+
+.key-picker {
+  border: 1px solid var(--line-strong);
+  padding: 16px 20px 14px;
+  display: grid;
+  gap: 14px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.picker-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  font-size: 17px;
+}
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+.picker-grid button {
+  height: 50px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-size: 21px;
+  font-weight: 300;
+  transition:
+    background-color 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+.picker-grid button:hover,
+.picker-grid button[aria-pressed="true"] {
+  background: var(--flip);
+  color: var(--flip-ink);
+}
+.picker-grid button:disabled {
+  color: var(--text-muted);
+  opacity: var(--outside-opacity);
+  cursor: default;
+  background: none;
+}
+.picker-foot {
+  display: flex;
+  gap: 18px;
+  align-items: baseline;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.picker-foot button {
+  color: var(--text);
+  border-bottom: 1px solid currentColor;
 }
 
 .chord-head {
@@ -612,6 +671,269 @@ ol {
   fill: transparent;
 }
 
+/* ---------- fretboard (§5.2): board full width, panel in three columns below ---------- */
+.main.board-view {
+  display: block;
+  padding: 0 0 36px;
+}
+.board-bar {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  padding: 6px 48px 10px;
+  font-size: 15px;
+  color: var(--text-soft);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.board-bar b {
+  color: var(--text);
+  font-weight: 500;
+}
+.board-setup {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--text-soft);
+}
+.board-setup svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.board-setup:hover {
+  color: var(--text);
+}
+.board-bar > .choice {
+  margin-left: auto;
+}
+.choice {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+.choice-name {
+  color: var(--text-muted);
+}
+.board-bar .choice-name {
+  display: none;
+}
+.choice button {
+  color: var(--text-muted);
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+}
+.choice button:hover {
+  color: var(--text-soft);
+}
+.choice button[aria-pressed="true"] {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+.board-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 40px;
+  margin: 0 48px 14px;
+  padding: 12px 0 14px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.board-settings .choice-name {
+  margin-right: -4px;
+}
+/* Frets past 15 scroll; the board fades out at the frame's edges instead of being cut. */
+.board-scroll {
+  --pad: 48px;
+  padding: 0 var(--pad);
+  overflow-x: auto;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--pad),
+    #000 calc(100% - var(--pad)),
+    transparent
+  );
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.board {
+  position: relative;
+}
+.board svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.board-glass {
+  fill: url(#boardSmoke);
+}
+.board-edge {
+  fill: none;
+  stroke: url(#boardRim);
+  stroke-width: 1.2;
+}
+.board .fret {
+  stroke: oklch(0.9 0.004 25 / 0.3);
+  stroke-width: 1;
+}
+.board .fret.octave {
+  stroke: oklch(0.9 0.004 25 / 0.5);
+}
+.board .nut {
+  stroke: oklch(0.95 0.004 25 / 0.75);
+  stroke-width: 3;
+}
+.board .string {
+  stroke: oklch(0.9 0.006 25 / 0.42);
+}
+.board .half-link {
+  fill: none;
+  stroke: var(--text-soft);
+  stroke-width: 1;
+}
+.inlay,
+.fret-number,
+.fret-dot {
+  position: absolute;
+  translate: -50% -50%;
+}
+.inlay {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px oklch(0.95 0.004 25 / 0.22);
+}
+.fret-number {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+/* A note sits on its string; its dark core hides the string behind the letter.
+   Notes fade and settle in when the selection changes, never on their own. */
+.fret-dot {
+  transition:
+    opacity 0.3s var(--ease),
+    scale 0.3s var(--ease);
+}
+.fret-dot .halo {
+  --d: var(--dot-d);
+  font-size: max(10px, calc(var(--d) * 0.4));
+}
+.fret-dot.hidden {
+  opacity: 0;
+  scale: 0.8;
+  pointer-events: none;
+}
+/* Dimmed is switched on by the user, so these stay readable. */
+.fret-dot .halo.off {
+  background: var(--note-core);
+  opacity: 0.6;
+}
+/* With no labels, scale tones that have no ring get a grey one so they still show. */
+.fret-dot.bare .halo.quiet,
+.fret-dot.bare .halo.off {
+  box-shadow: inset 0 0 0 1px var(--fn-other);
+}
+/* Upright on phones: the page scrolls down the neck, so the frame does not scroll. */
+.fretboard.upright .board-scroll {
+  overflow: visible;
+  mask-image: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fret-dot,
+  .fret-dot .halo {
+    transition: none;
+  }
+}
+
+.board-view .panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  padding: 28px 48px 0;
+  align-items: start;
+}
+.board-view .sparkle {
+  display: none;
+}
+.board-view .panel-key {
+  gap: 26px;
+}
+.board-view .key-name,
+.board-view .key-name.long {
+  font-size: 64px;
+  padding-right: 0;
+}
+.board-view .key-name.long {
+  font-size: 52px;
+}
+.board-view .key-meta {
+  margin-top: 12px;
+  font-size: 17px;
+}
+.board-view .note {
+  width: 50px;
+}
+.board-view .note .halo {
+  --d: 46px;
+}
+.board-view .notes {
+  gap: 40px 6px;
+}
+.board-view .pair-notes,
+.board-view .pair {
+  gap: 6px;
+}
+.board-view .pair::before {
+  left: 25px;
+  right: 25px;
+}
+.board-view .card {
+  padding: 20px 22px 16px;
+  gap: 9px;
+}
+.board-view .card .card-big {
+  font-size: 40px;
+}
+.board-view .card p {
+  font-size: 15px;
+}
+.board-view .chords {
+  columns: 1;
+}
+.board-view .chords button {
+  font-size: 22px;
+  padding: 2px 0;
+}
+.board-view .chords .numeral {
+  font-size: 15px;
+  width: 64px;
+}
+.board-view .chord-head h2 {
+  font-size: 17px;
+}
+@media (max-width: 1180px) {
+  .board-view .panel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .board-view .panel-key {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 760px) {
   .app {
     grid-template-rows: auto 1fr;
@@ -703,5 +1025,54 @@ ol {
   }
   .scene-orbits .wide-only {
     display: none;
+  }
+  .panel-key {
+    gap: 28px;
+  }
+  .board-bar {
+    padding: 8px 16px 10px;
+    gap: 8px 18px;
+    font-size: 14px;
+  }
+  .board-bar > .choice {
+    margin-left: 0;
+    width: 100%;
+  }
+  .board-settings {
+    margin: 0 16px 12px;
+    gap: 10px;
+    flex-direction: column;
+    font-size: 14px;
+  }
+  .board-scroll {
+    --pad: 16px;
+  }
+  .board-view .panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 22px 16px 4px;
+  }
+  .board-view .key-name {
+    font-size: 48px;
+  }
+  .board-view .key-name.long {
+    font-size: 40px;
+  }
+  .board-view .note {
+    width: 41px;
+  }
+  .board-view .note .halo {
+    --d: 38px;
+  }
+  .board-view .notes {
+    gap: 40px 3px;
+  }
+  .board-view .pair-notes,
+  .board-view .pair {
+    gap: 3px;
+  }
+  .board-view .pair::before {
+    left: 20px;
+    right: 20px;
   }
 }
