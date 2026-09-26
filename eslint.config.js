@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import js from "@eslint/js";
 import { defineConfig, globalIgnores } from "eslint/config";
 import prettier from "eslint-config-prettier";
@@ -6,8 +7,26 @@ import { reactRefresh } from "eslint-plugin-react-refresh";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+// Also skip anything git ignores locally (.git/info/exclude), as Prettier does.
+function localExcludes() {
+  try {
+    return readFileSync(".git/info/exclude", "utf8")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"))
+      .map((line) => (line.endsWith("/") ? `${line}**` : line));
+  } catch {
+    return [];
+  }
+}
+
 export default defineConfig([
-  globalIgnores(["dist", "test-results", "playwright-report"]),
+  globalIgnores([
+    "dist",
+    "test-results",
+    "playwright-report",
+    ...localExcludes(),
+  ]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [

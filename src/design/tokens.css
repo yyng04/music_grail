@@ -1,19 +1,34 @@
+/* Design tokens (DESIGN.md, "The Glass Orrery"). The spec's token names are kept
+   where they exist; the values are the approved round 4 look. */
 :root {
   color-scheme: dark;
 
-  /* Surfaces and text */
-  --bg: #0b0d12;
-  --surface: #141821;
-  --surface-2: #1c2230;
-  --text: #e6e8ee;
-  --text-muted: #7a8194;
-  --line: #2a3142;
+  /* Night scene */
+  --bg: oklch(0.155 0.006 25);
+  --text: oklch(0.955 0.004 25);
+  --text-soft: oklch(0.77 0.006 25);
+  --text-muted: oklch(0.6 0.008 25);
+  --line: oklch(0.95 0.004 25 / 0.13);
+  --line-strong: oklch(0.95 0.004 25 / 0.26);
+  --note-core: oklch(0.13 0.006 25);
+  --oxblood-glow: oklch(0.3 0.1 25);
+  --crimson-rim: #b3302a;
 
-  /* Function colours: a note's role in the primary key or focus chord */
-  --fn-root: #f5b84a;
-  --fn-third: #4fc3f7;
-  --fn-fifth: #9c7cf4;
-  --fn-seventh: #f06292;
-  --fn-other: #727b90;
-  --fn-outside-opacity: 0.2;
+  /* The one light surface: the comparison card and pressed controls */
+  --flip: oklch(0.955 0.004 25);
+  --flip-ink: oklch(0.17 0.006 25);
+  --flip-ink-soft: oklch(0.42 0.008 25);
+
+  /* Function colours: a note's role in the primary key or its focus chord (§4.2) */
+  --fn-root: oklch(0.86 0.14 82);
+  --fn-third: oklch(0.83 0.1 230);
+  --fn-fifth: oklch(0.75 0.15 300);
+  --fn-seventh: oklch(0.82 0.11 172);
+  --fn-other: oklch(0.6 0.012 260);
+  /* Circle labels and cells outside every window */
+  --outside-opacity: 0.4;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --font: "Urbanist Variable", "Urbanist", sans-serif;
+  --font-accidental: "Noto Music", sans-serif;
 }

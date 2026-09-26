@@ -1,0 +1,82 @@
+/* The halo-ring note (DESIGN.md, Components): chord tones are a hairline ring in
+   the role colour with a soft outer and inner glow, the name inside in the same
+   colour; other scale tones are the name alone, dim. With a compare set, the
+   glow means "in both", a plain ring "primary only", a dashed ring "compare only". */
+.halo {
+  --d: 52px;
+  width: var(--d);
+  height: var(--d);
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--d) * 0.4);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--c);
+  transition:
+    box-shadow 0.3s var(--ease),
+    color 0.3s var(--ease);
+}
+.halo.lit {
+  box-shadow:
+    inset 0 0 0 1.5px var(--c),
+    0 0 14px -2px var(--c),
+    inset 0 0 14px -6px var(--c);
+}
+.halo.ring {
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--c), transparent 20%);
+}
+.halo.quiet {
+  color: var(--fn-other);
+}
+.halo.quiet.ring {
+  box-shadow: inset 0 0 0 1px var(--fn-other);
+}
+.halo.new {
+  color: var(--text);
+  border: 1.5px dashed var(--text-soft);
+}
+.halo.core {
+  background: var(--note-core);
+}
+.halo.small {
+  font-weight: 500;
+}
+.halo.off {
+  color: var(--text-muted);
+  opacity: var(--outside-opacity);
+  background: transparent;
+}
+
+.r-root {
+  --c: var(--fn-root);
+}
+.r-third {
+  --c: var(--fn-third);
+}
+.r-fifth {
+  --c: var(--fn-fifth);
+}
+.r-seventh {
+  --c: var(--fn-seventh);
+}
+
+/* ♯ and ♭ come from Noto Music (the text face has none), sized and raised to sit
+   like accidentals in a printed chord symbol. */
+.acc {
+  font-family: var(--font-accidental);
+  font-size: 1.1em;
+  font-weight: 400;
+  /* The raised glyph must not make a flat key's line taller than a natural one. */
+  line-height: 0;
+  position: relative;
+  top: -0.34em;
+  margin: 0 0.02em;
+}
+tspan.acc {
+  font-family: var(--font-accidental);
+  font-size: 1.1em;
+  font-weight: 400;
+  baseline-shift: 0.34em;
+}
