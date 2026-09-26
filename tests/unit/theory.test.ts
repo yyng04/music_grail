@@ -7,6 +7,8 @@ import {
   fromTonalInterval,
   intervalBetween,
   isStandardKey,
+  enharmonicKey,
+  majorKeyTonics,
   keySignature,
   notesFromDegrees,
   relativeMinor,
@@ -161,5 +163,35 @@ describe("standard keys", () => {
   ] as const)("%s %s is rewritten as %s %s", (tonic, kind, standard) => {
     expect(isStandardKey({ tonic, kind })).toBe(false);
     expect(standardKey({ tonic, kind })).toEqual({ tonic: standard, kind });
+  });
+});
+
+describe("enharmonic spelling", () => {
+  it("lists the 15 standard major keys", () => {
+    expect(majorKeyTonics()).toEqual(
+      words("C G D A E B F# C# F Bb Eb Ab Db Gb Cb"),
+    );
+  });
+
+  it.each([
+    ["F#", "major", "Gb"],
+    ["Gb", "major", "F#"],
+    ["B", "major", "Cb"],
+    ["Cb", "major", "B"],
+    ["Db", "major", "C#"],
+    ["C#", "major", "Db"],
+    ["D#", "minor", "Eb"],
+    ["Eb", "minor", "D#"],
+    ["G#", "minor", "Ab"],
+    ["A#", "minor", "Bb"],
+  ] as const)("%s %s ↔ %s %s", (tonic, kind, other) => {
+    expect(enharmonicKey({ tonic, kind })).toEqual({ tonic: other, kind });
+  });
+
+  it("has no other spelling for keys away from the bottom of the circle", () => {
+    expect(enharmonicKey({ tonic: "G", kind: "major" })).toBeUndefined();
+    expect(
+      enharmonicKey({ tonic: "A", kind: "harmonic-minor" }),
+    ).toBeUndefined();
   });
 });

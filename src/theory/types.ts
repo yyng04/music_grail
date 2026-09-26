@@ -1,6 +1,7 @@
 export const KINDS = [
   "major",
   "minor",
+  "harmonic-minor",
   "dorian",
   "phrygian",
   "lydian",

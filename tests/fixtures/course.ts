@@ -197,3 +197,10 @@ export const urlRoundTrip = [
 export const urlChordRoundTrip = [
   { text: "C-sus4", root: "C", type: "sus4", symbol: "Csus4" },
 ];
+
+export const harmonicMinor = {
+  tonic: "A",
+  notes: "A B C D E F G#",
+  triads: "Am Bdim Caug Dm E F G#dim",
+  sevenths: "AmMaj7 Bm7b5 Cmaj7#5 Dm7 E7 Fmaj7 G#dim7",
+};

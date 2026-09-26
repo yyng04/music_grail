@@ -2,6 +2,7 @@ import {
   canonicalChord,
   chordInfo,
   detectChords,
+  harmonicMinorChords,
   majorKeyChords,
   parentMajorTonic,
   scaleNotes,
@@ -31,6 +32,8 @@ const NUMERAL: Record<string, { upper: boolean; suffix: string }> = {
   m7: { upper: false, suffix: "7" },
   m7b5: { upper: false, suffix: "m7b5" },
   dim7: { upper: false, suffix: "°7" },
+  mMaj7: { upper: false, suffix: "(maj7)" },
+  "maj7#5": { upper: true, suffix: "+maj7" },
 };
 
 function numeral(degree: number, suffix: string): string {
@@ -41,17 +44,21 @@ function numeral(degree: number, suffix: string): string {
 
 /**
  * The 7 diatonic chords of a target, from its tonic. Minor keys and modes take
- * the parent major key's chords, renumbered from their own tonic.
+ * the parent major key's chords, renumbered from their own tonic; harmonic
+ * minor has its own chords.
  */
 export function diatonicChords(
   target: Pick<Target, "tonic" | "kind">,
   { sevenths }: { sevenths: boolean },
 ): DiatonicChord[] {
+  const harmonic = target.kind === "harmonic-minor";
   const parent = parentMajorTonic(target);
-  const parentChords = majorKeyChords(parent, sevenths);
-  const offset = scaleNotes({ tonic: parent, kind: "major" }).indexOf(
-    target.tonic,
-  );
+  const parentChords = harmonic
+    ? harmonicMinorChords(target.tonic, sevenths)
+    : majorKeyChords(parent, sevenths);
+  const offset = harmonic
+    ? 0
+    : scaleNotes({ tonic: parent, kind: "major" }).indexOf(target.tonic);
   if (offset < 0) throw new Error(`${target.tonic} is not in ${parent} major`);
 
   return parentChords.map((_, i) => {
