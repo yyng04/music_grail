@@ -17,8 +17,13 @@ const NUT = 64;
 const END = 28;
 /** Board glass overhang past the outer strings. */
 export const OVERHANG = 18;
-/** Upright: the length of the neck from the nut to the bridge, so fret 12 lands at half of it. */
+/** Upright: the scale length the low frets follow (nut to bridge, in pixels). */
 const UPRIGHT_SCALE = 1150;
+/**
+ * Upright, no fret is shorter than a dot plus this gap, so high frets never
+ * overlap; the neck is to scale only until frets reach that length.
+ */
+const UPRIGHT_GAP = 6;
 
 export const INLAYS = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
 export const DOUBLE_INLAYS = new Set([12, 24]);
@@ -74,7 +79,16 @@ export function boardGeometry(options: {
     ? UPRIGHT_SCALE
     : (Math.max(viewWidth, compact ? 860 : 900) - NUT - END) /
       (1 - Math.pow(2, -VISIBLE_FRETS / 12));
-  const wire = (n: number) => NUT + scale * (1 - Math.pow(2, -n / 12));
+  const real = (n: number) => NUT + scale * (1 - Math.pow(2, -n / 12));
+  const wires = [NUT];
+  for (let n = 1; n <= frets; n++) {
+    const length = real(n) - real(n - 1);
+    wires.push(
+      (wires[n - 1] ?? NUT) +
+        (upright ? Math.max(length, dot + UPRIGHT_GAP) : length),
+    );
+  }
+  const wire = (n: number) => wires[n] ?? real(n);
   const length = wire(frets) + END;
   const mirror = (a: number) => (!upright && leftHanded ? length - a : a);
   const mid = (n: number) => (n === 0 ? NUT / 2 : (wire(n - 1) + wire(n)) / 2);
