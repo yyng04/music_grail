@@ -250,6 +250,16 @@ export type RingNote = {
  * key's spelling (the compare key's for compare-only notes); unlit positions
  * use the standard spelling of the position.
  */
+/** The standard spelling of a pitch, as an unlit note-ring position shows it (Bb, F#). */
+export function standardName(note: string): string {
+  const c = chroma(note);
+  const i =
+    Array.from({ length: 12 }, (_, j) => j).find(
+      (j) => columnChroma(j) === c,
+    ) ?? 0;
+  return spellingsFor(i)[0] ?? note;
+}
+
 export function noteRing(selection: Selection): RingNote[] {
   const standard = Array.from(
     { length: 12 },
