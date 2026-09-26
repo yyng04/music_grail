@@ -10,13 +10,20 @@ import {
   roleOf,
   sharedNotes,
 } from "../../src/relations/index.ts";
-import { chordInfo, scaleNotes, type Target } from "../../src/theory/index.ts";
+import {
+  chordInfo,
+  keySignature,
+  parentMajorTonic,
+  scaleNotes,
+  type Target,
+} from "../../src/theory/index.ts";
 import {
   chordsByDegree,
   diatonicSeventhsOfF,
   diatonicTriadsOfG,
   guideToneMotion,
   guideTones,
+  harmonicMinor,
   keyDiffs,
   keyFromDominant,
   nameChords,
@@ -233,4 +240,41 @@ describe("degrees and roles", () => {
 describe("guide tones (v2, Chords tab)", () => {
   it.todo(`guideTones: ${String(Object.keys(guideTones).length)} fixtures`);
   it.todo(`guideToneMotion: ${String(guideToneMotion.length)} fixtures`);
+});
+
+describe("harmonic minor", () => {
+  const target: Target = { tonic: harmonicMinor.tonic, kind: "harmonic-minor" };
+
+  it(`scale: ${harmonicMinor.notes}`, () => {
+    expect(scaleNotes(target)).toEqual(words(harmonicMinor.notes));
+  });
+
+  it(`triads: ${harmonicMinor.triads}`, () => {
+    expect(
+      diatonicChords(target, { sevenths: false }).map((c) => c.symbol),
+    ).toEqual(words(harmonicMinor.triads));
+  });
+
+  it(`sevenths: ${harmonicMinor.sevenths}`, () => {
+    expect(
+      diatonicChords(target, { sevenths: true }).map((c) => c.symbol),
+    ).toEqual(words(harmonicMinor.sevenths));
+  });
+
+  it("numbers its chords from the minor tonic", () => {
+    expect(
+      diatonicChords(target, { sevenths: false }).map((c) => c.numeral),
+    ).toEqual(words("i ii° III+ iv V VI vii°"));
+  });
+
+  it("gives the raised 7th its own degree and role", () => {
+    expect(degreeOf("G#", target)).toBe("7");
+    expect(roleOf("G#", target)).toBe("seventh");
+    expect(roleOf("G", target)).toBe("outside");
+  });
+
+  it("shares A minor's key signature and window", () => {
+    expect(keySignature(target).label).toBe("0");
+    expect(parentMajorTonic(target)).toBe("C");
+  });
 });

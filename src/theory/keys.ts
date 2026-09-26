@@ -7,15 +7,23 @@ export function normaliseKind(name: string): Kind | undefined {
   const lower = name.toLowerCase();
   if (lower === "ionian") return "major";
   if (lower === "aeolian") return "minor";
+  if (lower === "harmonic minor") return "harmonic-minor";
   return (KINDS as readonly string[]).includes(lower)
     ? (lower as Kind)
     : undefined;
 }
 
-function modeName(kind: Kind): string {
+/** Tonal's scale name for a kind. */
+function scaleName(kind: Kind): string {
   if (kind === "major") return "ionian";
   if (kind === "minor") return "aeolian";
+  if (kind === "harmonic-minor") return "harmonic minor";
   return kind;
+}
+
+/** The mode whose parent major key a kind shares (harmonic minor: its natural minor's). */
+function modeName(kind: Kind): string {
+  return kind === "harmonic-minor" ? "aeolian" : scaleName(kind);
 }
 
 export function isValidTonic(tonic: string): boolean {
@@ -24,13 +32,16 @@ export function isValidTonic(tonic: string): boolean {
 
 /** The 7 notes of the target, starting on its tonic. */
 export function scaleNotes(target: Pick<Target, "tonic" | "kind">): string[] {
-  const notes = Scale.get(`${target.tonic} ${modeName(target.kind)}`).notes;
+  const notes = Scale.get(`${target.tonic} ${scaleName(target.kind)}`).notes;
   if (notes.length !== 7)
     throw new Error(`Unknown key: ${target.tonic} ${target.kind}`);
   return notes;
 }
 
-/** Tonic of the major key that shares the target's notes: D dorian → "C". */
+/**
+ * Tonic of the major key that shares the target's notes: D dorian → "C".
+ * Harmonic minor takes its natural minor's relative major (A → "C").
+ */
 export function parentMajorTonic(
   target: Pick<Target, "tonic" | "kind">,
 ): string {
@@ -83,4 +94,46 @@ export function relativeMinor(majorTonic: string): Target {
 export function majorKeyChords(tonic: string, sevenths: boolean): string[] {
   const key = Key.majorKey(tonic);
   return [...(sevenths ? key.chords : key.triads)];
+}
+
+/** Diatonic chord symbols of a harmonic minor key, in degree order. */
+export function harmonicMinorChords(
+  tonic: string,
+  sevenths: boolean,
+): string[] {
+  const key = Key.minorKey(tonic).harmonic;
+  return [...(sevenths ? key.chords : key.triads)];
+}
+
+/** The 15 standard major keys: C, then 7 steps up in fifths and 7 down in fourths. */
+export function majorKeyTonics(): string[] {
+  const up = ["C"];
+  const down: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    up.push(Note.transpose(up[up.length - 1] ?? "C", "5P"));
+    down.push(Note.transpose(down[down.length - 1] ?? "C", "4P"));
+  }
+  return [...up, ...down];
+}
+
+/**
+ * The same key spelled the other standard way, if it has one:
+ * F# major → Gb major, D# minor → Eb minor, B major → Cb major.
+ * The parent major key is swapped for its enharmonic twin, and the tonic keeps
+ * its position in that key's scale.
+ */
+export function enharmonicKey(
+  target: Pick<Target, "tonic" | "kind">,
+): Pick<Target, "tonic" | "kind"> | undefined {
+  const parent = parentMajorTonic(target);
+  const pitch = Note.get(parent).chroma;
+  const twin = majorKeyTonics().find(
+    (t) => t !== parent && Note.get(t).chroma === pitch,
+  );
+  if (!twin) return undefined;
+  const degree = scaleNotes({ tonic: parent, kind: "major" }).indexOf(
+    scaleNotes(target)[0] ?? "",
+  );
+  const tonic = scaleNotes({ tonic: twin, kind: "major" })[degree];
+  return tonic ? { tonic, kind: target.kind } : undefined;
 }

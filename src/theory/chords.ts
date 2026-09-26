@@ -12,6 +12,8 @@ const SUFFIX: Record<string, string> = {
   "minor seventh": "m7",
   "half-diminished": "m7b5",
   "diminished seventh": "dim7",
+  "minor/major seventh": "mMaj7",
+  "augmented seventh": "maj7#5",
 };
 
 export type ChordInfo = {
