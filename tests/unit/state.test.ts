@@ -54,6 +54,20 @@ describe("URL hash", () => {
     },
   );
 
+  it("reads and writes harmonic minor", () => {
+    expect(decodeKey("A-harmonic-minor")).toEqual({
+      tonic: "A",
+      kind: "harmonic-minor",
+    });
+    expect(encodeKey({ tonic: "F#", kind: "harmonic-minor" })).toBe(
+      "Fs-harmonic-minor",
+    );
+    expect(parseHash("p=A-harmonic-minor&pchord=E-7")).toEqual({
+      value: { primary: { tonic: "A", kind: "harmonic-minor", chord: "E7" } },
+      warnings: [],
+    });
+  });
+
   it("writes a major triad's type as maj", () => {
     expect(encodeChord("C")).toBe("C-maj");
     expect(decodeChord("C-maj")).toBe("C");
@@ -169,6 +183,61 @@ describe("store", () => {
       kind: "major",
     });
     expect(warn).toHaveBeenCalledOnce();
+  });
+
+  it("arms compare and disarms it when a compare key is set", () => {
+    const store = createAppStore();
+    store.getState().armCompare(true);
+    expect(store.getState().compareArmed).toBe(true);
+    store.getState().setCompare({ tonic: "D", kind: "major" });
+    expect(store.getState().compareArmed).toBe(false);
+    expect(store.getState().selection.compare).toEqual({
+      tonic: "D",
+      kind: "major",
+    });
+  });
+
+  it("does not compare a key with itself", () => {
+    const store = createAppStore();
+    store.getState().setCompare({ tonic: "C", kind: "major" });
+    expect(store.getState().selection.compare).toBeUndefined();
+  });
+
+  it("toggles F# major to Gb major, respelling the focus chord", () => {
+    const store = createAppStore();
+    store.getState().setPrimary({ tonic: "F#", kind: "major", chord: "D#m7" });
+    store.getState().toggleColumnSpelling(6);
+    expect(store.getState().selection.primary).toEqual({
+      tonic: "Gb",
+      kind: "major",
+      chord: "Ebm7",
+    });
+    store.getState().toggleColumnSpelling(6);
+    expect(store.getState().selection.primary).toEqual({
+      tonic: "F#",
+      kind: "major",
+      chord: "D#m7",
+    });
+  });
+
+  it("toggles a minor key in a toggled column (D# minor ↔ Eb minor)", () => {
+    const store = createAppStore();
+    store.getState().setPrimary({ tonic: "D#", kind: "minor" });
+    store.getState().toggleColumnSpelling(6);
+    expect(store.getState().selection.primary).toEqual({
+      tonic: "Eb",
+      kind: "minor",
+    });
+  });
+
+  it("remembers the toggle for a column no selected key is in", () => {
+    const store = createAppStore();
+    store.getState().toggleColumnSpelling(5);
+    expect(store.getState().columnSpellings).toEqual({ 5: "Cb" });
+    expect(store.getState().selection.primary).toEqual({
+      tonic: "C",
+      kind: "major",
+    });
   });
 
   it("rejects an invalid tonic", () => {

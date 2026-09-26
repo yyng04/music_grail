@@ -1,7 +1,13 @@
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
-import type { Selection, Target } from "../theory/index.ts";
-import { checkSelection, checkTarget, DEFAULT_SELECTION } from "./selection.ts";
+import { columnOf, columns, type ColumnSpellings } from "../relations/index.ts";
+import { enharmonicKey, type Selection, type Target } from "../theory/index.ts";
+import {
+  checkSelection,
+  checkTarget,
+  DEFAULT_SELECTION,
+  respellTarget,
+} from "./selection.ts";
 
 export type Slot = "primary" | "compare";
 
@@ -11,6 +17,10 @@ export type AppState = {
   sevenths: boolean;
   /** Audio is muted until the header toggle turns it on. */
   audioEnabled: boolean;
+  /** The Compare control is armed: the next key picked becomes the compare. */
+  compareArmed: boolean;
+  /** Spelling chosen with the enharmonic toggle for columns no selected key is in. */
+  columnSpellings: ColumnSpellings;
 
   setPrimary: (target: Target) => void;
   setCompare: (target: Target) => void;
@@ -21,6 +31,12 @@ export type AppState = {
   setSelection: (selection: Selection) => void;
   setSevenths: (sevenths: boolean) => void;
   setAudioEnabled: (enabled: boolean) => void;
+  armCompare: (armed: boolean) => void;
+  /**
+   * The enharmonic toggle on a bottom column (§5.1): switches the column's
+   * spelling and respells the selected keys in that column with it.
+   */
+  toggleColumnSpelling: (column: number) => void;
 };
 
 function warnAll(warnings: readonly string[]) {
@@ -39,15 +55,27 @@ export function createAppStore() {
     selection: DEFAULT_SELECTION,
     sevenths: true,
     audioEnabled: false,
+    compareArmed: false,
+    columnSpellings: {},
 
     setPrimary: (target) => {
       set({ selection: { ...get().selection, primary: checked(target) } });
     },
     setCompare: (target) => {
-      set({ selection: { ...get().selection, compare: checked(target) } });
+      const { primary } = get().selection;
+      const compare = checked(target);
+      const same =
+        compare.tonic === primary.tonic && compare.kind === primary.kind;
+      set({
+        selection: same ? { primary } : { primary, compare },
+        compareArmed: false,
+      });
     },
     clearCompare: () => {
-      set({ selection: { primary: get().selection.primary } });
+      set({
+        selection: { primary: get().selection.primary },
+        compareArmed: false,
+      });
     },
     setFocusChord: (slot, chord) => {
       const { selection } = get();
@@ -67,6 +95,25 @@ export function createAppStore() {
     },
     setAudioEnabled: (audioEnabled) => {
       set({ audioEnabled });
+    },
+    armCompare: (compareArmed) => {
+      set({ compareArmed });
+    },
+    toggleColumnSpelling: (column) => {
+      const { selection, columnSpellings } = get();
+      const col = columns(selection, columnSpellings)[column];
+      if (!col?.alternate) return;
+      const respell = (t: Target | undefined) => {
+        if (!t || columnOf(t) !== column) return t;
+        const key = enharmonicKey(t);
+        return key ? respellTarget(t, key) : t;
+      };
+      const primary = respell(selection.primary) ?? selection.primary;
+      const compare = respell(selection.compare);
+      set({
+        columnSpellings: { ...columnSpellings, [column]: col.alternate },
+        selection: compare ? { primary, compare } : { primary },
+      });
     },
   }));
 }

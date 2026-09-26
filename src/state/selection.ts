@@ -47,6 +47,23 @@ export function checkTarget(target: Target): Checked<Target> | undefined {
   return { value: { ...key, chord: symbol }, warnings };
 }
 
+/**
+ * The same target in another spelling of its key (F# major → Gb major), with
+ * the focus chord's root respelled to match. Returns the target unchanged if
+ * the respelled chord is not diatonic.
+ */
+export function respellTarget(
+  target: Target,
+  key: Pick<Target, "tonic" | "kind">,
+): Target {
+  if (!target.chord) return { ...key };
+  const info = chordInfo(target.chord);
+  const root = info && spellIn(info.root, key);
+  const chord =
+    info && root ? canonicalChord(`${root}${info.suffix}`) : undefined;
+  return chord && isDiatonic(chord, key) ? { ...key, chord } : { ...key };
+}
+
 export function checkSelection(selection: Selection): Checked<Selection> {
   const primary = checkTarget(selection.primary);
   const compare = selection.compare
