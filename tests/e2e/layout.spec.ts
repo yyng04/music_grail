@@ -5,6 +5,7 @@ import { expect, test, type Page } from "@playwright/test";
 const states = [
   "#p=G-major&view=fretboard",
   "#p=G-major&view=fretboard&show=triads",
+  "#p=G-major&pchord=G-maj7&view=fretboard&show=shells",
   "#p=C-major&pchord=G-7&view=fretboard&show=pairs",
   "#p=G-major&view=fretboard&show=harmony&in=6ths",
   "#p=G-major&pchord=G-maj7&view=fretboard&show=guide",

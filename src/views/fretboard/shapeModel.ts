@@ -19,6 +19,7 @@ import {
   harmonyShapes,
   labelReference,
   pairShapes,
+  shellShapes,
   stringSets,
   triadShapes,
   type Dot,
@@ -56,7 +57,7 @@ import {
 
 export const MODES: { value: Mode; text: string }[] = [
   { value: "scale", text: "Scale" },
-  { value: "triads", text: "Triad shapes" },
+  { value: "chords", text: "Chord shapes" },
   { value: "two", text: "Two-note chords" },
   { value: "guide", text: "Guide tones" },
 ];
@@ -104,6 +105,9 @@ export const PAIRS: {
   },
 ];
 
+export const SHELL_CAPTION =
+  "Root, 3rd and 7th: the notes that name a 7th chord, with the 5th left out. The standard jazz and blues comping shapes.";
+
 export const HARMONY_CAPTION: Record<Harmony, string> = {
   "3rds": "Sweet harmony for melodies and fills.",
   "6ths": "Wider and fuller, a staple of soul and country fills.",
@@ -145,6 +149,8 @@ export type BoardModel = {
   positionDots: Record<string, Pick<Dot, "string" | "fret" | "role">[]>;
   sets: StringSet[];
   set?: StringSet;
+  /** Strings in use (the others are dimmed): the chosen set, or a shell's own strings. */
+  active?: number[];
   /** Two-note chords: the pairs the chord offers, and the one shown. */
   pairs: typeof PAIRS;
   pair?: (typeof PAIRS)[number];
@@ -205,7 +211,9 @@ function describe(
 /** The string sets a mode offers, highest first; none in Scale. */
 export function setsFor(st: ShapeState, strings: readonly string[]) {
   if (st.mode === "scale") return [];
-  if (st.mode === "triads") return stringSets(strings, 3);
+  // Shells have fixed strings: the four forms say where they sit.
+  if (st.mode === "chords")
+    return st.family === "triads" ? stringSets(strings, 3) : [];
   const skip =
     st.mode === "two" &&
     st.two === "harmony" &&
@@ -239,22 +247,23 @@ export function focusDegree(sel: Selection): number | undefined {
 
 /**
  * The chord a mode shows, from the focus chord's degree (the tonic with none):
- * Triad shapes use the triad, guide tones the 7th chord, two-note chords the
- * focus chord as it is (or the tonic chord in the chosen size).
+ * triads use the triad, shells and guide tones the 7th chord, two-note chords
+ * the focus chord as it is (or the tonic chord in the chosen size).
  */
 export function modeChord(
   sel: Selection,
-  mode: Mode,
+  st: Pick<ShapeState, "mode" | "family">,
   sevenths: boolean,
 ): string {
-  if (mode === "scale") return sel.primary.chord ?? "";
-  if (mode === "two")
+  if (st.mode === "scale") return sel.primary.chord ?? "";
+  if (st.mode === "two")
     return (
       sel.primary.chord ??
       diatonicChords(sel.primary, { sevenths })[0]?.symbol ??
       ""
     );
-  const chords = diatonicChords(sel.primary, { sevenths: mode !== "triads" });
+  const triad = st.mode === "chords" && st.family === "triads";
+  const chords = diatonicChords(sel.primary, { sevenths: !triad });
   const degree = focusDegree(sel) ?? 1;
   return chords[degree - 1]?.symbol ?? chords[0]?.symbol ?? "";
 }
@@ -409,7 +418,8 @@ export function boardModel(
 
   const sets = setsFor(st, strings);
   const set = sets.find((s) => s.id === st.strings) ?? defaultSet(st, sets);
-  const chord = modeChord(sel, st.mode, sevenths);
+  const chord = modeChord(sel, st, sevenths);
+  const shells = st.mode === "chords" && st.family === "shells";
   // Said when the mode shows a different size of the focus chord ("the triad of Am7").
   const focus = sel.primary.chord;
   const derived = focus && focus !== chord ? focus : undefined;
@@ -424,11 +434,15 @@ export function boardModel(
   const pair =
     s0 !== undefined && s1 !== undefined ? ([s0, s1] as const) : undefined;
 
-  if (st.mode === "triads" && set) {
+  if (st.mode === "chords" && st.family === "triads" && set) {
     all = triadShapes(strings, set.strings, chordTones(chord), frets);
     const info = chordInfo(chord);
     const kind = info ? (TRIAD_WORDS[info.suffix] ?? info.suffix) : "";
     what = `${info?.root ?? chord} ${kind} triad${derived ? ` (the triad of ${chordLabel(derived)})` : ""} · strings ${set.name}`;
+  } else if (shells) {
+    all = shellShapes(strings, chordTones(chord), frets);
+    what = `${chordLabel(chord)} shell${derived ? ` (the 7th form of ${chordLabel(derived)})` : ""}`;
+    caption = `${SHELL_CAPTION}${derived ? ` Shells need a 7th, so ${chordLabel(derived)} is shown as ${chordLabel(chord)}.` : ""}`;
   } else if (st.mode === "two" && st.two === "pairs" && pair) {
     const tones = chordTones(chord);
     const [a, b] = (pairInfo?.pair ?? []).map((r) =>
@@ -471,7 +485,9 @@ export function boardModel(
     });
 
   let detail = "no shape within 4 frets";
-  if (shape && st.mode === "triads")
+  if (shape && shells)
+    detail = `${shape.tag ?? ""} · ${shape.dots.map((d) => d.name).join(" ")}`;
+  else if (shape && st.mode === "chords")
     detail = `${shape.tag ?? ""} (${shape.bass ?? ""} in the bass)`;
   else if (shape && st.mode === "two") {
     const [lo, hi] = shape.dots;
@@ -516,6 +532,9 @@ export function boardModel(
     links: [],
     sets,
     set,
+    active:
+      set?.strings ??
+      (shells && shape ? shape.dots.map((d) => d.string) : undefined),
     pairs: available,
     pair: pairInfo,
     chord,
@@ -528,7 +547,7 @@ export function boardModel(
       forced,
       harmonyMode || !focus
         ? key
-        : chordLabel(st.mode === "guide" ? chord : focus),
+        : chordLabel(st.mode === "guide" || shells ? chord : focus),
     ),
     caption,
     sound: shape ? pitches(shape.dots, strings) : [],

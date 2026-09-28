@@ -7,10 +7,13 @@ import {
   guideToneMotion,
   harmonyShapes,
   pairShapes,
+  shellForms,
+  shellShapes,
   stringSets,
   triadShapes,
 } from "../../src/relations/index.ts";
-import { tuning } from "../../src/theory/index.ts";
+import { pitchClass, tuning } from "../../src/theory/index.ts";
+import { shellG7Sevenths, shellVoicings } from "../fixtures/course.ts";
 
 const GUITAR = tuning("guitar", "standard").strings;
 const G_MAJOR = { tonic: "G", kind: "major" } as const;
@@ -205,6 +208,91 @@ describe("CAGED positions", () => {
       { name: "D", from: 4, to: 7 },
       { name: "C", from: 7, to: 10 },
       { name: "A", from: 9, to: 12 },
+    ]);
+  });
+});
+
+describe("shell voicings", () => {
+  const names = (tuning: readonly string[], strings: readonly number[]) =>
+    strings.map((s) => pitchClass(tuning[s] ?? "")).join(" ");
+  const gmaj7 = shellShapes(GUITAR, chordTones("Gmaj7"), 24);
+
+  it.each(shellVoicings)(
+    "$chord $order on $strings",
+    ({ order, strings, notes }) => {
+      const shape = gmaj7.find(
+        (s) =>
+          s.tag === `${order}, root on ${strings.split(" ")[0] ?? ""}` &&
+          names(
+            GUITAR,
+            s.dots.map((d) => d.string),
+          ) === strings,
+      );
+      expect(shape?.dots.map((d) => [d.name, d.fret])).toEqual(
+        notes.map(([n, f]) => [n, f]),
+      );
+    },
+  );
+
+  it("steps through the four forms, then the same forms an octave up", () => {
+    expect(gmaj7.slice(0, 4).map((s) => s.tag)).toEqual([
+      "R 3 7, root on E",
+      "R 7 3, root on E",
+      "R 3 7, root on A",
+      "R 7 3, root on A",
+    ]);
+    gmaj7.slice(4).forEach((s, i) => {
+      const lower = gmaj7[i];
+      expect(s.tag).toBe(lower?.tag);
+      expect(s.dots.map((d) => d.fret)).toEqual(
+        lower?.dots.map((d) => d.fret + 12),
+      );
+    });
+  });
+
+  it.each(shellG7Sevenths)(
+    "G7 $order on $strings has F in place of F#",
+    ({ order, strings, seventh }) => {
+      const shape = shellShapes(GUITAR, chordTones("G7"), 24).find(
+        (s) =>
+          s.tag === `${order}, root on ${strings.split(" ")[0] ?? ""}` &&
+          names(
+            GUITAR,
+            s.dots.map((d) => d.string),
+          ) === strings,
+      );
+      const f = shape?.dots.find((d) => d.role === "seventh");
+      expect([f?.name, f?.fret]).toEqual([...seventh]);
+    },
+  );
+
+  it("names the forms from the tuning: bass and drop D", () => {
+    const forms = (instrument: "guitar" | "bass4" | "bass5", t: string) =>
+      shellForms(tuning(instrument, t).strings).map(
+        (f) => `${f.order} on ${f.name}`,
+      );
+    expect(forms("guitar", "standard")).toEqual([
+      "R 3 7 on E A D",
+      "R 7 3 on E D G",
+      "R 3 7 on A D G",
+      "R 7 3 on A G B",
+    ]);
+    expect(forms("guitar", "drop-d")).toEqual([
+      "R 3 7 on D A D",
+      "R 7 3 on D D G",
+      "R 3 7 on A D G",
+      "R 7 3 on A G B",
+    ]);
+    expect(forms("bass4", "standard")).toEqual([
+      "R 3 7 on E A D",
+      "R 7 3 on E D G",
+      "R 3 7 on A D G",
+    ]);
+    expect(forms("bass5", "standard")).toEqual([
+      "R 3 7 on B E A",
+      "R 7 3 on B A D",
+      "R 3 7 on E A D",
+      "R 7 3 on E D G",
     ]);
   });
 });

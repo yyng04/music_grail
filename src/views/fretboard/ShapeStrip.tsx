@@ -204,7 +204,12 @@ export function ShapeStrip({
       let name: ReactNode = <Spelled text={s.tag ?? pair} />;
       let sub = fretsText(s);
       let extra = `${spokenName(s.bass ?? "")} in the bass`;
-      if (st.mode === "two") {
+      if (st.mode === "chords" && st.family === "shells") {
+        // Named by form ("R 7 3, root on E"), with its notes low to high.
+        sub = `${names.join(" ")}, ${fretsText(s)}`;
+        extra = spokenName(names.join(", "));
+        name = <Spelled text={s.tag ?? ""} />;
+      } else if (st.mode === "two") {
         name = <Spelled text={pair} />;
         sub = `${s.interval ?? ""}, ${fretsText(s)}`;
         extra = `${spokenName(names.join(" and "))}, ${INTERVAL_WORDS[s.interval ?? ""] ?? s.interval ?? ""}`;
@@ -289,7 +294,9 @@ export function ShapeStrip({
               >
                 {t.diagram}
                 <span className="tile-name">{t.name}</span>{" "}
-                <span className="tile-sub">{t.sub}</span>
+                <span className="tile-sub">
+                  <Spelled text={t.sub} />
+                </span>
                 {t.extra && <span className="sr-only">, {t.extra}</span>}
               </button>
             ))}

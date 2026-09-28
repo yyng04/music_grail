@@ -31,7 +31,7 @@ export type Shape = {
   high: number;
   /** Triads: "Root position", "1st inversion", "2nd inversion". */
   tag?: string;
-  /** Triads: the note on the lowest string. */
+  /** Triads: the note on the lowest string. Shells: the root's string, by its open note. */
   bass?: string;
   /** Two-note shapes: from the lower note to the upper, quality-first ("d5"). */
   interval?: string;
@@ -336,6 +336,105 @@ export function guideShapes(
       },
     ];
   });
+}
+
+export type ShellForm = {
+  /** Low to high: "R 3 7" or "R 7 3". */
+  order: string;
+  /** Tuning indices, lowest first. */
+  strings: [number, number, number];
+  roles: [ShapeRole, ShapeRole, ShapeRole];
+  /** Open notes of the three strings, low to high: "E A D". */
+  name: string;
+  /** Open note of the root's string: "E". */
+  root: string;
+};
+
+/**
+ * The four shell forms: R 3 7 on three neighbouring strings, and R 7 3
+ * with one string skipped between the root and the 7th, each with the root on
+ * the lowest string and on the next one up. Forms that need a string the
+ * instrument does not have are left out (a 4-string bass has three).
+ */
+export function shellForms(tuning: readonly string[]): ShellForm[] {
+  const out: ShellForm[] = [];
+  for (const r of [0, 1])
+    for (const [order, gaps, roles] of [
+      ["R 3 7", [1, 2], ["root", "third", "seventh"]],
+      ["R 7 3", [2, 3], ["root", "seventh", "third"]],
+    ] as const) {
+      const strings: [number, number, number] = [r, r + gaps[0], r + gaps[1]];
+      if (strings.some((x) => x >= tuning.length)) continue;
+      const open = strings.map((x) => pitchClass(tuning[x] ?? ""));
+      out.push({
+        order,
+        strings,
+        roles: [...roles],
+        name: open.join(" "),
+        root: open[0] ?? "",
+      });
+    }
+  return out;
+}
+
+/**
+ * Shell voicings of a 7th chord: root, 3rd and 7th, the 5th left out, in the
+ * four forms, each at the lowest place it fits within 4 frets, then the same
+ * forms an octave up where they fit. Tagged "R 7 3, root on E".
+ */
+export function shellShapes(
+  tuning: readonly string[],
+  tones: readonly Tone[],
+  frets: number,
+): Shape[] {
+  const byRole = (role: ShapeRole) => tones.find((t) => t.role === role);
+  const places = shellForms(tuning).map((form) => {
+    const found: Shape[] = [];
+    const [rs] = form.strings;
+    const root = byRole("root");
+    if (!root) return found;
+    for (let f = 0; f <= frets; f++) {
+      const open = tuning[rs] ?? "E2";
+      if (chroma(fretPitch(open, f)) !== chroma(root.name)) continue;
+      const dots: Dot[] = [];
+      for (let i = 0; i < 3; i++) {
+        const tone = byRole(form.roles[i] ?? "root");
+        const string = form.strings[i] ?? 0;
+        const onString = tuning[string] ?? "E2";
+        if (!tone) break;
+        // The note nearest the root's fret on its string, within the 4-fret span.
+        let best: number | undefined;
+        for (let g = Math.max(0, f - 3); g <= Math.min(frets, f + 3); g++)
+          if (
+            chroma(fretPitch(onString, g)) === chroma(tone.name) &&
+            (best === undefined || Math.abs(g - f) < Math.abs(best - f))
+          )
+            best = g;
+        if (best === undefined) break;
+        dots.push(at(string, best, tone));
+      }
+      const all = dots.map((d) => d.fret);
+      if (dots.length !== 3 || Math.max(...all) - Math.min(...all) > 3)
+        continue;
+      found.push({
+        dots,
+        low: Math.min(...all),
+        high: Math.max(...all),
+        tag: `${form.order}, root on ${form.root}`,
+        bass: form.root,
+      });
+    }
+    return found;
+  });
+  // The four forms at their lowest place, then the four an octave up, and so on.
+  const out: Shape[] = [];
+  const rounds = Math.max(0, ...places.map((p) => p.length));
+  for (let k = 0; k < rounds; k++)
+    for (const p of places) {
+      const shape = p[k];
+      if (shape) out.push(shape);
+    }
+  return out;
 }
 
 export type Position = { name: string; from: number; to: number };

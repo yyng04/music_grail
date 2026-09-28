@@ -55,7 +55,7 @@ describe("what each mode shows", () => {
 
   it("Triad shapes name the 7th chord their triad comes from", () => {
     const m = model(
-      { mode: "triads" },
+      { mode: "chords" },
       { primary: { ...G_MAJOR, chord: "Am7" } },
     );
     expect(m.chord).toBe("Am");
@@ -73,7 +73,7 @@ describe("what each mode shows", () => {
     expect(scale.position?.name).toBe("E");
     expect(scale.title).toBe("G major · E form, frets 2 to 5");
     const triads = model(
-      { mode: "triads", position: "E" },
+      { mode: "chords", position: "E" },
       { primary: G_MAJOR },
     );
     expect(triads.position).toBeUndefined();
@@ -111,5 +111,32 @@ describe("the reference line", () => {
   it("guide tones name the 7th chord they draw", () => {
     const m = model({ mode: "guide" }, { primary: { ...G_MAJOR, chord: "G" } });
     expect(m.reference).toBe("Colours: roles in Gmaj7");
+  });
+});
+
+describe("shells in the Chord shapes mode", () => {
+  it("title the form and its notes", () => {
+    const m = model(
+      { mode: "chords", family: "shells" },
+      { primary: { ...G_MAJOR, chord: "Gmaj7" } },
+    );
+    expect(m.title).toBe("Gmaj7 shell · R 3 7, root on E · G B F#");
+    expect(m.caption).toBe(
+      "Root, 3rd and 7th: the notes that name a 7th chord, with the 5th left out. The standard jazz and blues comping shapes.",
+    );
+    expect(m.sets).toEqual([]);
+    expect(m.sound).toEqual(["G2", "B2", "F#3"]);
+  });
+
+  it("use the chord's 7th form when a triad is focused, and say so", () => {
+    const m = model(
+      { mode: "chords", family: "shells" },
+      { primary: { ...G_MAJOR, chord: "G" } },
+      false,
+    );
+    expect(m.chord).toBe("Gmaj7");
+    expect(m.title).toContain("Gmaj7 shell (the 7th form of G)");
+    expect(m.caption).toContain("Shells need a 7th, so G is shown as Gmaj7.");
+    expect(m.reference).toBe("Colours and numbers: roles in Gmaj7");
   });
 });

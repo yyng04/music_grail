@@ -55,6 +55,24 @@ test("sound on loads the guitar samples and plays clicks", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test("a shell plays when it is picked", async ({ page }) => {
+  const { requests, errors } = watch(page);
+  await page.goto("./#p=G-major&pchord=G-maj7&view=fretboard&show=shells");
+  await settle(page);
+  await sound(page).click();
+  await expect
+    .poll(() => requests.filter((u) => u.includes("/samples/guitar/")).length)
+    .toBe(17);
+  await page
+    .getByRole("group", { name: "Shapes along the neck" })
+    .getByRole("button", { name: /^R 7 3, root on E/ })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/shape=2/);
+  await page.waitForTimeout(600);
+  expect(errors).toEqual([]);
+});
+
 test("a bass loads its own samples", async ({ page }) => {
   const { requests, errors } = watch(page);
   await page.addInitScript(() => {

@@ -204,3 +204,53 @@ export const harmonicMinor = {
   triads: "Am Bdim Caug Dm E F G#dim",
   sevenths: "AmMaj7 Bm7b5 Cmaj7#5 Dm7 E7 Fmaj7 G#dim7",
 };
+
+/** Shell voicings (root, 3rd, 7th) on guitar: the four forms of Gmaj7, low to high. */
+export const shellVoicings = [
+  {
+    chord: "Gmaj7",
+    order: "R 3 7",
+    strings: "E A D",
+    notes: [
+      ["G", 3],
+      ["B", 2],
+      ["F#", 4],
+    ],
+  },
+  {
+    chord: "Gmaj7",
+    order: "R 7 3",
+    strings: "E D G",
+    notes: [
+      ["G", 3],
+      ["F#", 4],
+      ["B", 4],
+    ],
+  },
+  {
+    chord: "Gmaj7",
+    order: "R 3 7",
+    strings: "A D G",
+    notes: [
+      ["G", 10],
+      ["B", 9],
+      ["F#", 11],
+    ],
+  },
+  {
+    chord: "Gmaj7",
+    order: "R 7 3",
+    strings: "A G B",
+    notes: [
+      ["G", 10],
+      ["F#", 11],
+      ["B", 12],
+    ],
+  },
+] as const;
+
+/** G7: the same shapes with F in place of F# (D string fret 3; G string fret 10). */
+export const shellG7Sevenths = [
+  { order: "R 3 7", strings: "E A D", seventh: ["F", 3] },
+  { order: "R 3 7", strings: "A D G", seventh: ["F", 10] },
+] as const;

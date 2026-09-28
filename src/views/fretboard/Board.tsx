@@ -69,7 +69,7 @@ export function Board({
         ? string
         : count - 1 - string;
   const across = (string: number) => g.row(place(string));
-  const active = model.set?.strings;
+  const active = model.active;
   const dim = (string: number) =>
     active !== undefined && !active.includes(string);
 

@@ -73,7 +73,7 @@ export function saveFretboard(settings: FretboardSettings): void {
   }
 }
 
-export type Mode = "scale" | "triads" | "two" | "guide";
+export type Mode = "scale" | "chords" | "two" | "guide";
 export type Harmony = "3rds" | "6ths" | "4ths" | "octaves";
 export const HARMONIES: readonly Harmony[] = [
   "3rds",
@@ -85,6 +85,8 @@ export const HARMONIES: readonly Harmony[] = [
 /** The Show control and each mode's settings. Kept in the URL hash. */
 export type ShapeState = {
   mode: Mode;
+  /** Chord shapes: triads and their inversions, or shell voicings (R 3 7, R 7 3). */
+  family: "triads" | "shells";
   /** Two-note chords: tones of the chord, or the key's scale in one interval. */
   two: "pairs" | "harmony";
   /** CAGED letter, or null for the whole neck. */
@@ -101,6 +103,7 @@ export type ShapeState = {
 
 export const DEFAULT_SHAPES: ShapeState = {
   mode: "scale",
+  family: "triads",
   two: "pairs",
   position: null,
   strings: null,

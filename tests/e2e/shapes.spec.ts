@@ -32,6 +32,13 @@ const states = [
   },
 ];
 
+// Gmaj7 shells, all four forms.
+for (const n of [1, 2, 3, 4])
+  states.push({
+    name: `7-gmaj7-shells-form-${String(n)}`,
+    hash: `#p=G-major&pchord=G-maj7&view=fretboard&show=shells${n > 1 ? `&shape=${String(n)}` : ""}`,
+  });
+
 for (const state of states) {
   test(`screenshot ${state.name}`, async ({ page }, info) => {
     await page.goto(`./${state.hash}`);
@@ -52,7 +59,7 @@ test("the Show modes write the URL and title what the board shows", async ({
 }) => {
   await page.goto("./#p=G-major&view=fretboard");
   await settle(page);
-  await page.getByRole("tab", { name: "Triad shapes" }).click();
+  await page.getByRole("tab", { name: "Chord shapes" }).click();
   await expect(page).toHaveURL(/show=triads/);
   await expect(title(page)).toHaveText(
     "G major triad · strings G B E · 1st inversion (B in the bass)",
@@ -149,4 +156,25 @@ test("the page never scrolls sideways in the shape modes", async ({ page }) => {
       ),
     ).toBeLessThanOrEqual(0);
   }
+});
+
+test("shells step through the four Gmaj7 forms, each titled by form and notes", async ({
+  page,
+}) => {
+  await page.goto("./#p=G-major&pchord=G-maj7&view=fretboard&show=shells");
+  await settle(page);
+  const titles = [
+    "Gmaj7 shell · R 3 7, root on E · G B F♯",
+    "Gmaj7 shell · R 7 3, root on E · G F♯ B",
+    "Gmaj7 shell · R 3 7, root on A · G B F♯",
+    "Gmaj7 shell · R 7 3, root on A · G F♯ B",
+  ];
+  for (const [i, text] of titles.entries()) {
+    await expect(title(page)).toHaveText(text);
+    await expect(page.locator(".fret-dot:not(.hidden)")).toHaveCount(3);
+    if (i < titles.length - 1) await page.keyboard.press("ArrowRight");
+  }
+  // The strings in use are named at the nut; the shell has no string choice.
+  await expect(page.locator(".string-name.on")).toHaveText(["A", "G", "B"]);
+  await expect(page.getByRole("group", { name: "Strings" })).toHaveCount(0);
 });

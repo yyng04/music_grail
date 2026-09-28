@@ -115,7 +115,9 @@ const NUMBER_ROLE: Record<string, ShapeRole> = {
 };
 
 function shapeParams(st: ShapeState): [string, string][] {
-  const show = st.mode === "two" ? st.two : st.mode;
+  // Chord shapes and two-note chords are named by their kind: show=shells, show=pairs.
+  const show =
+    st.mode === "two" ? st.two : st.mode === "chords" ? st.family : st.mode;
   const out: [string, string][] = [];
   if (show !== "scale") out.push(["show", show]);
   if (st.position) out.push(["pos", st.position]);
@@ -134,7 +136,11 @@ export function parseShapes(hash: string): ShapeState {
   const q = new URLSearchParams(hash.replace(/^#/, ""));
   const st: ShapeState = { ...DEFAULT_SHAPES, next: undefined };
   const show = q.get("show");
-  if (show === "triads" || show === "guide") st.mode = show;
+  if (show === "triads" || show === "shells") {
+    st.mode = "chords";
+    st.family = show;
+  }
+  if (show === "guide") st.mode = show;
   if (show === "pairs" || show === "harmony") {
     st.mode = "two";
     st.two = show;

@@ -283,7 +283,7 @@ describe("the Show state in the hash", () => {
     expect(formatHash(sel, "fretboard", DEFAULT_SHAPES)).toBe(
       "p=G-major&view=fretboard",
     );
-    const triads: ShapeState = { ...DEFAULT_SHAPES, mode: "triads" };
+    const triads: ShapeState = { ...DEFAULT_SHAPES, mode: "chords" };
     expect(formatHash(sel, "circle", triads)).toBe("p=G-major");
   });
 
@@ -335,6 +335,22 @@ describe("the Show state in the hash", () => {
     expect(parseShapes(formatHash(sel, "fretboard", sixths))).toEqual({
       ...sixths,
       next: undefined,
+    });
+  });
+
+  it("names chord shapes by their voicing, and still reads old triad links", () => {
+    const shells: ShapeState = {
+      ...DEFAULT_SHAPES,
+      mode: "chords",
+      family: "shells",
+      shape: 3,
+    };
+    const hash = formatHash(sel, "fretboard", shells);
+    expect(hash).toBe("p=G-major&view=fretboard&show=shells&shape=4");
+    expect(parseShapes(hash)).toEqual({ ...shells, next: undefined });
+    expect(parseShapes("show=triads")).toMatchObject({
+      mode: "chords",
+      family: "triads",
     });
   });
 

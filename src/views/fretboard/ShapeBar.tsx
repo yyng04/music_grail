@@ -102,7 +102,24 @@ export function ShapeBar({
   );
 
   let options = null;
-  if (st.mode === "triads") options = strings;
+  if (st.mode === "chords")
+    options = (
+      <>
+        <Choice
+          stacked
+          name="Voicing"
+          options={[
+            { value: "triads", text: "Triads" },
+            { value: "shells", text: "Shells" },
+          ]}
+          value={st.family}
+          onChange={(family) => {
+            set({ family, strings: null });
+          }}
+        />
+        {st.family === "triads" && strings}
+      </>
+    );
   else if (st.mode === "two")
     options = (
       <>

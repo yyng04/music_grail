@@ -16,7 +16,8 @@ Live demo: <https://yyng04.github.io/music_grail/>
 - Two keys can be compared. The app lists the notes that change between them (G major to D major: C becomes C♯) and the notes and chords they share.
 - A fretboard for 6-string guitar and 4- and 5-string bass, in standard or drop D tuning, with up to 24 frets. It can be turned to the player's view or mirrored for the left hand, and it stands upright on phones.
 - Each note is coloured by its role (root, 3rd, 5th or 7th) in the key or in a chosen chord, and labelled by note name, degree or interval.
-- Shapes on the fretboard: the five CAGED positions, triads and their inversions on any three neighbouring strings, two-note chords, the key harmonised in 3rds, 6ths, 4ths or octaves, and the guide tones of one chord moving to the next.
+- Shapes on the fretboard: the five CAGED positions, triads and their inversions on any three neighbouring strings, shell voicings (root, 3rd and 7th) in their four common forms, two-note chords, the key harmonised in 3rds, 6ths, 4ths or octaves, and the guide tones of one chord moving to the next.
+- A line above the fretboard says whether the colours and numbers show roles in the key or in the chosen chord.
 - Sampled guitar and bass sound, off by default. A note plays at its exact pitch, and a chord plays as an arpeggio and then together.
 - Notes are spelled as the key spells them, so E♯ in F♯ major stays E♯. The URL records the key, the compare key, the chord and the fretboard view, so any view can be shared as a link.
 - The keyboard reaches every control, and animation is turned off when the system asks for reduced motion.
