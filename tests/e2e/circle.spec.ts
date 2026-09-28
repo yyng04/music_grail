@@ -99,7 +99,9 @@ test("the enharmonic toggle respells the selected key", async ({ page }) => {
 test("a chord chip sets and clears the focus chord", async ({ page }) => {
   await page.goto("./#p=Bb-major");
   await settle(page);
-  const chip = page.getByRole("button", { name: /vi7/ });
+  const chip = page
+    .getByRole("region", { name: "Chords" })
+    .getByRole("button", { name: "G minor 7, chord 6" });
   await chip.click();
   await expect(page).toHaveURL(/#p=Bb-major&pchord=G-m7$/);
   await chip.click();

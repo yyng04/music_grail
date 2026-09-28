@@ -1,60 +1,40 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// Shape states: the Show list, the shape strip and the shape board.
+// Shape states: triad shapes (G major,
+// strings G B E, 1st inversion), two-note chords (G7, 3rd + 7th, strings B E)
+// and guide tones (Gmaj7 → Cmaj7).
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(500);
 }
-const show = (page: Page, mode: string) =>
-  page
-    .getByRole("region", { name: "Show" })
-    .getByRole("button", { name: new RegExp(`${mode}$`) })
-    .click();
 
-const states: {
-  name: string;
-  hash: string;
-  steps: (page: Page) => Promise<void>;
-}[] = [
+const states = [
+  { name: "1-g-major-e-shape", hash: "#p=G-major&view=fretboard&pos=E" },
   {
-    name: "1-g-major-e-shape",
-    hash: "#p=G-major&view=fretboard",
-    steps: (p) =>
-      p
-        .getByRole("group", { name: "Positions" })
-        .getByRole("button", { name: /E shape/ })
-        .click(),
+    name: "2-g-triads-strings-gbe",
+    hash: "#p=G-major&view=fretboard&show=triads",
   },
   {
-    name: "2-g-triads-strings-123",
-    hash: "#p=G-major&view=fretboard",
-    steps: (p) => show(p, "Triads"),
+    name: "3-g7-3rd-7th-strings-be",
+    hash: "#p=C-major&pchord=G-7&view=fretboard&show=pairs",
   },
   {
-    name: "3-g7-pair-3rd-7th",
-    hash: "#p=C-major&pchord=G-7&view=fretboard",
-    steps: (p) => show(p, "Two-note chords"),
+    name: "4-g-major-3rds-strings-gb",
+    hash: "#p=G-major&view=fretboard&show=harmony",
   },
   {
-    name: "4-g-major-3rds-strings-23",
-    hash: "#p=G-major&view=fretboard",
-    steps: async (p) => {
-      await show(p, "Two-note chords");
-      await p.getByRole("button", { name: "The key's scale" }).click();
-    },
+    name: "5-guide-tones-gmaj7-cmaj7",
+    hash: "#p=G-major&pchord=G-maj7&view=fretboard&show=guide",
   },
   {
-    name: "5-guide-tones-am7-d7",
-    hash: "#p=G-major&pchord=A-m7&view=fretboard",
-    steps: (p) => show(p, "Guide tones"),
+    name: "6-guide-tones-am7-d7",
+    hash: "#p=G-major&pchord=A-m7&view=fretboard&show=guide",
   },
 ];
 
 for (const state of states) {
   test(`screenshot ${state.name}`, async ({ page }, info) => {
     await page.goto(`./${state.hash}`);
-    await settle(page);
-    await state.steps(page);
     await settle(page);
     await page.screenshot({
       path: `tests/e2e/__screenshots__/m3b-${state.name}-${info.project.name}.png`,
@@ -63,19 +43,103 @@ for (const state of states) {
   });
 }
 
-test("triads step through the inversions up the neck", async ({ page }) => {
+const title = (page: Page) => page.locator(".shape-title");
+const shapes = (page: Page) => page.getByRole("group", { name: "Shapes" });
+
+test("the Show modes write the URL and title what the board shows", async ({
+  page,
+}) => {
   await page.goto("./#p=G-major&view=fretboard");
   await settle(page);
-  await show(page, "Triads");
-  const shapes = page.getByRole("group", { name: "Shapes" });
+  await page.getByRole("button", { name: "Triad shapes" }).click();
+  await expect(page).toHaveURL(/show=triads/);
+  await expect(title(page)).toHaveText(
+    "G major triad · strings G B E · 1st inversion (B in the bass)",
+  );
+  // Only the current shape is on the board: three notes.
+  await expect(page.locator(".fret-dot:not(.hidden)")).toHaveCount(3);
+  // The strings in use are named at the nut and the others dimmed.
+  await expect(page.locator(".string-name.on")).toHaveText(["G", "B", "E"]);
+  await expect(page.locator(".string-name.dim")).toHaveCount(3);
+});
+
+test("← / → and the strip's arrows step through the shapes", async ({
+  page,
+}) => {
+  await page.goto("./#p=G-major&view=fretboard&show=triads");
+  await settle(page);
+  await page.keyboard.press("ArrowRight");
+  await expect(page).toHaveURL(/shape=2/);
   await expect(
-    shapes.getByRole("button", { name: /1st inversion/ }).first(),
-  ).toHaveAttribute("aria-pressed", "true");
+    shapes(page).getByRole("button", { pressed: true }),
+  ).toHaveAccessibleName(/^2nd inversion, D in the bass/);
   await page
-    .getByRole("button", { name: "Next shape, up the neck" })
-    .first()
+    .getByRole("button", { name: "Previous shape, down the neck" })
     .click();
-  await expect(
-    shapes.getByRole("button", { name: /2nd inversion/ }).first(),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page).not.toHaveURL(/shape=/);
+  await expect(title(page)).toContainText("1st inversion");
+});
+
+test("chord chips show another chord without leaving the board", async ({
+  page,
+}) => {
+  await page.goto("./#p=G-major&view=fretboard&show=triads");
+  await settle(page);
+  // On phones the settings fold away behind the title line.
+  const fold = page.locator("button.shape-title");
+  if (await fold.count()) await fold.click();
+  await page
+    .getByRole("group", { name: "Chord" })
+    .getByRole("button", { name: "A minor, chord 2" })
+    .click();
+  await expect(page).toHaveURL(/pchord=A-m&/);
+  await expect(title(page)).toContainText("A minor triad · strings G B E");
+});
+
+test("two-note chords by string pair, labelled by notes then interval", async ({
+  page,
+}) => {
+  await page.goto("./#p=C-major&pchord=G-7&view=fretboard&show=pairs");
+  await settle(page);
+  await expect(title(page)).toHaveText(
+    "G7 · 3rd + 7th · strings B E · B + F (d5)",
+  );
+  const count = await shapes(page).getByRole("button").count();
+  expect(count).toBeGreaterThan(0);
+  expect(count).toBeLessThanOrEqual(6);
+});
+
+test("guide tones name their notes and state the real motion", async ({
+  page,
+}) => {
+  await page.goto("./#p=G-major&pchord=G-maj7&view=fretboard&show=guide");
+  await settle(page);
+  await expect(page.locator(".shape-caption")).toContainText(
+    "B held, F♯ → E, a whole step down.",
+  );
+  const labels = await page.locator(".fret-dot:not(.hidden)").allTextContents();
+  expect(labels.sort()).toEqual(["B", "E", "F♯"]);
+});
+
+test("every strip tile and chord button has a name", async ({ page }) => {
+  await page.goto("./#p=G-major&view=fretboard&show=triads");
+  await settle(page);
+  for (const b of await page
+    .locator(".tile, .chips button, .chords button")
+    .all())
+    expect((await b.getAttribute("aria-label"))?.length ?? 0).toBeGreaterThan(
+      3,
+    );
+});
+
+test("the page never scrolls sideways in the shape modes", async ({ page }) => {
+  for (const s of states) {
+    await page.goto(`./${s.hash}`);
+    await settle(page);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+      ),
+    ).toBeLessThanOrEqual(0);
+  }
 });

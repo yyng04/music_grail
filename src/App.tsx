@@ -7,7 +7,7 @@ import { columns, stepKey } from "./relations/index.ts";
 import { appStore, useAppStore } from "./state/index.ts";
 import { CircleOfFifths } from "./views/circle/CircleOfFifths.tsx";
 import { Fretboard } from "./views/fretboard/Fretboard.tsx";
-import { FretboardPanel } from "./views/fretboard/FretboardPanel.tsx";
+import { stepStrip } from "./views/fretboard/shapeModel.ts";
 
 /** Arrow keys move the primary key round the circle; Esc cancels compare. */
 function useKeyboard() {
@@ -25,7 +25,13 @@ function useKeyboard() {
         return;
       }
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
       e.preventDefault();
+      // On the fretboard, ← / → step the strip: positions, or shapes up the neck.
+      if (state.view === "fretboard") {
+        stepStrip(e.key === "ArrowRight" ? 1 : -1);
+        return;
+      }
       const cols = columns(state.selection, state.columnSpellings);
       state.setPrimary(
         stepKey(state.selection.primary, e.key === "ArrowRight" ? 1 : -1, cols),
@@ -50,7 +56,7 @@ export function App() {
         {view === "fretboard" ? (
           <main className="main board-view">
             <Fretboard />
-            <FretboardPanel />
+            <Panel />
           </main>
         ) : (
           <main className="main">

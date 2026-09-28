@@ -12,8 +12,12 @@
 
 /** Frets that fit the view before the board scrolls, lying down. */
 export const VISIBLE_FRETS = 15;
-/** Nut position along the neck; open notes sit before it at half this. */
-const NUT = 64;
+/**
+ * Along the neck, before the nut: the string names, then the open-string
+ * notes. `NAME` is where the names sit; the gaps keep a dot clear of both.
+ */
+const NAME = 14;
+const GAP = 12;
 const END = 28;
 /** Board glass overhang past the outer strings. */
 export const OVERHANG = 18;
@@ -39,6 +43,8 @@ export type BoardGeometry = {
   fret: (n: number) => number;
   /** Along the neck: where a note at this fret sits (mid-fret; before the nut when open). */
   dot: (n: number) => number;
+  /** Along the neck: the string names, before the open-string notes. */
+  name: number;
   /** Across the neck: a string by its place, 0 = first drawn (top, or left when upright). */
   row: (place: number) => number;
   /** Across the neck: the edges of the glass and the fret numbers. */
@@ -75,23 +81,25 @@ export function boardGeometry(options: {
   const numberRow = upright ? firstRow - OVERHANG - 14 : lastRow + 36;
 
   // Along the neck.
+  const open = NAME + GAP + dot / 2;
+  const nut = open + dot / 2 + GAP;
   const scale = upright
     ? UPRIGHT_SCALE
-    : (Math.max(viewWidth, compact ? 860 : 900) - NUT - END) /
+    : (Math.max(viewWidth, compact ? 860 : 900) - nut - END) /
       (1 - Math.pow(2, -VISIBLE_FRETS / 12));
-  const real = (n: number) => NUT + scale * (1 - Math.pow(2, -n / 12));
-  const wires = [NUT];
+  const real = (n: number) => nut + scale * (1 - Math.pow(2, -n / 12));
+  const wires = [nut];
   for (let n = 1; n <= frets; n++) {
     const length = real(n) - real(n - 1);
     wires.push(
-      (wires[n - 1] ?? NUT) +
+      (wires[n - 1] ?? nut) +
         (upright ? Math.max(length, dot + UPRIGHT_GAP) : length),
     );
   }
   const wire = (n: number) => wires[n] ?? real(n);
   const length = wire(frets) + END;
   const mirror = (a: number) => (!upright && leftHanded ? length - a : a);
-  const mid = (n: number) => (n === 0 ? NUT / 2 : (wire(n - 1) + wire(n)) / 2);
+  const mid = (n: number) => (n === 0 ? open : (wire(n - 1) + wire(n)) / 2);
 
   return {
     upright,
@@ -100,6 +108,7 @@ export function boardGeometry(options: {
     xy: (along, across) => (upright ? [across, along] : [along, across]),
     fret: (n) => mirror(wire(n)),
     dot: (n) => mirror(mid(n)),
+    name: mirror(NAME),
     row: (place) => firstRow + spacing * place,
     firstRow,
     lastRow,

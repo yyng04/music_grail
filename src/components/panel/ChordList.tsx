@@ -1,7 +1,7 @@
 import { compareSummary, diatonicChords } from "../../relations/index.ts";
 import { useAppStore } from "../../state/index.ts";
 import { Spelled } from "../Spelled.tsx";
-import { chordLabel } from "../spelling.ts";
+import { chordLabel, spokenChord } from "../spelling.ts";
 
 /** The key's chords, numbered by their Roman numerals; the focus chord turns bright. */
 export function ChordList() {
@@ -57,6 +57,7 @@ export function ChordList() {
             <button
               type="button"
               aria-pressed={primary.chord === c.symbol}
+              aria-label={`${spokenChord(c.symbol)}, chord ${String(c.degree)}${compare && shared.has(c.symbol) ? `, also in ${compare.tonic}` : ""}`}
               onClick={() => {
                 setFocusChord(
                   "primary",

@@ -98,7 +98,7 @@ test("the Fretboard tab opens the board and is kept in the URL", async ({
   await page.getByRole("button", { name: "Fretboard" }).click();
   await expect(page).toHaveURL(/#p=G-major&view=fretboard$/);
   await expect(
-    page.getByRole("group", { name: "Fretboard showing G major" }),
+    page.getByRole("group", { name: /^Fretboard: G major/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Circle" }).click();
   await expect(page).toHaveURL(/#p=G-major$/);
@@ -199,7 +199,7 @@ test("phones get an upright board with the nut at the top", async ({
   test.skip(info.project.name !== "mobile", "phone layout only");
   await page.goto("./#p=G-major&view=fretboard");
   await settle(page);
-  const board = page.getByRole("group", { name: /^Fretboard showing/ });
+  const board = page.getByRole("group", { name: /^Fretboard: / });
   const box = await board.boundingBox();
   expect(box && box.height > box.width).toBe(true);
   // Low E on the left, high E on the right; fret 3 below the open strings.

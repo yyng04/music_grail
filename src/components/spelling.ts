@@ -1,5 +1,5 @@
 import type { Role } from "../relations/index.ts";
-import type { Kind } from "../theory/index.ts";
+import { chordInfo, type Kind } from "../theory/index.ts";
 
 const TONES = new Set<Role>(["root", "third", "fifth", "seventh"]);
 /** Root, 3rd, 5th and 7th get a ring and a role word; other scale tones do not. */
@@ -57,4 +57,25 @@ export function spokenName(text: string): string {
   return segments(text)
     .map((s) => (s.accidental ? (words[s.text] ?? s.text) : s.text))
     .join("");
+}
+
+const CHORD_WORDS: Record<string, string> = {
+  "": "major",
+  m: "minor",
+  dim: "diminished",
+  aug: "augmented",
+  maj7: "major 7",
+  "7": "7",
+  m7: "minor 7",
+  m7b5: "half-diminished 7",
+  dim7: "diminished 7",
+  mMaj7: "minor major 7",
+  "maj7#5": "augmented major 7",
+};
+
+/** A chord symbol for screen readers: "F#m7b5" → "F sharp half-diminished 7". */
+export function spokenChord(symbol: string): string {
+  const info = chordInfo(symbol);
+  if (!info) return spokenName(symbol);
+  return `${spokenName(info.root)} ${CHORD_WORDS[info.suffix] ?? spokenName(info.suffix)}`;
 }

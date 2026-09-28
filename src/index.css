@@ -934,152 +934,134 @@ ol {
   }
 }
 
-/* Fretboard shapes on the board and the Show controls. */
+/* ---------- fretboard Show controls: the bar and strip above the board ---------- */
 .r-other {
   --c: var(--fn-other);
 }
-/* shapes on the board */
-.fret-dot.faint {
-  opacity: 0.3;
+.shape-bar {
+  display: grid;
+  gap: 10px;
+  padding: 2px 48px 6px;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.board .stick {
-  fill: none;
-  stroke: oklch(0.95 0.004 25 / 0.16);
-  stroke-width: 1;
+.show-modes {
+  font-size: 18px;
+  gap: 6px 28px;
 }
-.board .stick.lit {
-  stroke: oklch(0.95 0.004 25 / 0.55);
-  stroke-width: 1.3;
+.shape-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 40px;
 }
-.board .move {
-  fill: none;
-  stroke: var(--text);
-  color: var(--text);
-  stroke-width: 1.2;
-}
-.board .slab-edge {
-  fill: none;
-  stroke: url(#slabRim);
-  stroke-width: 1.8;
-}
-.bracket-name,
-.slab-name {
-  font-size: 14px;
-  color: var(--text);
-  font-weight: 500;
-}
-.slab-step {
-  font-size: 22px;
-  font-weight: 300;
-  width: 28px;
-  height: 28px;
-  line-height: 28px;
-  color: var(--text);
-}
-.pos-letter {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--text-muted);
-}
-.pos-letter.on {
-  color: var(--text);
-  font-weight: 700;
-}
-/* shared control rows */
-.mode-bar {
+.shape-options {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 10px 40px;
-  padding-bottom: 8px;
+  gap: 10px 36px;
   font-size: 15px;
 }
-.mode-caption {
-  padding-top: 2px;
-  padding-bottom: 12px;
-  font-size: 15px;
-  line-height: 1.45;
-  color: var(--text-soft);
-  max-width: 1100px;
-}
-.mode-caption b {
-  color: var(--text);
-  font-weight: 500;
-}
-.stepper {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 14px;
-  font-size: 15px;
-  color: var(--text-soft);
-}
-.stepper button {
-  font-size: 24px;
-  font-weight: 300;
-  line-height: 1;
-  color: var(--text);
-  padding: 0 4px;
-}
-.stepper button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-.stepper b {
-  color: var(--text);
-  font-weight: 600;
-}
-.stepper small {
-  margin-left: 10px;
+.choice-note {
   font-size: 13px;
   color: var(--text-muted);
 }
-.stepper.bare {
-  gap: 6px;
-}
-
-.show-list ol {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.show-list li > button {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 3px 0;
-  font-size: 26px;
-  font-weight: 300;
+.board-note {
+  margin-left: auto;
+  font-size: 14px;
   color: var(--text-muted);
-  width: 100%;
-  text-align: left;
+}
+/* The key's chords: numeral above name, plain text; the pressed one turns bright. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+}
+.chips button {
+  display: grid;
+  justify-items: center;
+  min-width: 46px;
+  padding: 2px 6px 3px;
+  color: var(--text-muted);
+  border-bottom: 1px solid transparent;
   transition: color 0.2s var(--ease);
 }
-.show-list li > button:hover {
+.chip-numeral {
+  font-size: 12px;
+  font-weight: 500;
+}
+.chip-name {
+  font-size: 19px;
+  font-weight: 300;
+  line-height: 1.25;
+}
+.chips button:hover {
   color: var(--text-soft);
 }
-.show-list li > button[aria-pressed="true"] {
+.chips button[aria-pressed="true"] {
   color: var(--text);
+  border-bottom-color: var(--text);
+}
+.chips button[aria-pressed="true"] .chip-name {
   font-weight: 600;
 }
-.show-list .numeral {
+.shape-title {
   font-size: 16px;
   font-weight: 500;
-  width: 22px;
+  color: var(--text);
 }
-.show-detail {
-  display: grid;
-  gap: 10px;
-  padding: 8px 0 16px 34px;
+.shape-title.fold {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  text-align: left;
+}
+.shape-title.fold svg {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.shape-caption {
+  margin-top: -6px;
+  max-width: 1000px;
   font-size: 15px;
-}
-.show-detail .mode-caption {
-  padding: 0;
+  line-height: 1.45;
+  color: var(--text-soft);
 }
 
+/* The strip: one tile per shape (or position) in neck order, arrows at the ends. */
+.strip-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 36px 2px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.strip-step {
+  flex: none;
+  width: 30px;
+  height: 44px;
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--text);
+}
+.strip-step:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
 .strip-wrap {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
   overflow-x: auto;
-  padding-top: 4px;
-  padding-bottom: 10px;
+  padding: 4px 2px 8px;
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
 }
@@ -1088,13 +1070,18 @@ ol {
   gap: 10px;
   width: max-content;
 }
+.strip-empty {
+  padding: 22px 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
 .tile {
   display: grid;
   justify-items: center;
   align-content: start;
   gap: 4px;
-  padding: 10px 10px 8px;
   min-width: 86px;
+  padding: 10px 10px 8px;
   border: 1px solid var(--line);
   transition:
     border-color 0.2s var(--ease),
@@ -1140,83 +1127,79 @@ ol {
   stroke: var(--text-soft);
   stroke-dasharray: 2 2;
 }
-@media (max-width: 760px) {
-  .show-bar,
-  .mode-bar,
-  .mode-caption,
-  .position-bar,
-  .strip-wrap {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  .show-bar {
-    font-size: 16px;
-  }
-  .show-bar .choice {
-    gap: 6px 18px;
-  }
-  .mode-bar {
-    gap: 8px 24px;
-    font-size: 14px;
-  }
-  .mode-caption {
-    font-size: 14px;
-  }
-  .b-panel {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .show-list {
-    padding: 4px 16px 14px;
-  }
-  .show-list li > button {
-    font-size: 21px;
-  }
-  .show-detail {
-    padding-left: 34px;
-    font-size: 14px;
-  }
-}
-.board .slab-spec {
-  fill: none;
-  stroke: oklch(1 0 0 / 0.55);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
+
+/* On the board: string names at the nut, strings outside the active set dimmed,
+   the position as a glass window, guide-tone arrows and "held" marks. */
+.string-name,
+.slab-name,
+.pos-letter,
+.slab-step,
 .held {
   position: absolute;
   translate: -50% -50%;
+  white-space: nowrap;
+}
+.string-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.string-name.on {
+  color: var(--text);
+}
+.string-name.dim {
+  opacity: 0.4;
+}
+.board .string.dim {
+  stroke: oklch(0.9 0.006 25 / 0.14);
+}
+.board .move {
+  fill: none;
+  stroke: var(--text);
+  color: var(--text);
+  stroke-width: 1.2;
+}
+.board .slab-edge {
+  fill: none;
+  stroke: url(#slabRim);
+  stroke-width: 1.8;
+}
+.slab-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+.slab-step {
+  width: 28px;
+  height: 28px;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 28px;
+  color: var(--text);
+}
+.pos-letter {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+.pos-letter.on {
+  color: var(--text);
+  font-weight: 700;
+}
+.held {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-soft);
-  white-space: nowrap;
 }
-.slab-name,
-.pos-letter,
-.slab-step {
-  position: absolute;
-  translate: -50% -50%;
-  white-space: nowrap;
+.fret-dot.playable {
+  cursor: pointer;
 }
+/* Room above the board for a position's name and arrows, and below for its letters. */
 .fretboard:not(.upright) .board-scroll {
+  padding-top: 6px;
+}
+.fretboard:not(.upright) .board-scroll.windowed {
   padding-top: 30px;
   padding-bottom: 30px;
-}
-.strip-wrap {
-  padding-left: 48px;
-  padding-right: 48px;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.fretboard.upright .show-list {
-  padding: 4px 16px 14px;
-}
-.panel-side {
-  display: flex;
-  flex-direction: column;
-  gap: 34px;
-}
-.board-view .show-list .choice {
-  font-size: 15px;
 }
 
 @media (max-width: 760px) {
@@ -1323,6 +1306,48 @@ ol {
     margin-left: 0;
     width: 100%;
   }
+  .board-note {
+    margin-left: 0;
+  }
+  .shape-bar {
+    padding: 2px 16px 6px;
+    gap: 8px;
+  }
+  /* One line of modes that scrolls sideways, so the board starts sooner. */
+  .show-modes {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    font-size: 15px;
+    gap: 6px 14px;
+    padding-bottom: 2px;
+  }
+  .show-modes button {
+    flex: none;
+  }
+  .shape-settings {
+    gap: 8px 24px;
+  }
+  .shape-options {
+    gap: 8px 24px;
+    font-size: 14px;
+  }
+  .chip-name {
+    font-size: 17px;
+  }
+  .chips button {
+    min-width: 40px;
+    padding: 2px 4px 3px;
+  }
+  .shape-title {
+    font-size: 15px;
+  }
+  .shape-caption {
+    font-size: 14px;
+  }
+  .strip-bar {
+    padding: 0 4px 2px;
+  }
   .board-settings {
     margin: 0 16px 12px;
     gap: 10px;
@@ -1331,10 +1356,6 @@ ol {
   }
   .board-scroll {
     --pad: 16px;
-  }
-  .strip-wrap {
-    padding-left: 16px;
-    padding-right: 16px;
   }
   .board-view .panel {
     grid-template-columns: minmax(0, 1fr);

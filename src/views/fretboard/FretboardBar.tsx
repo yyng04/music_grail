@@ -1,7 +1,5 @@
 import { useId, useState } from "react";
-import { Spelled } from "../../components/Spelled.tsx";
-import { chordLabel } from "../../components/spelling.ts";
-import { labelReference } from "../../relations/index.ts";
+import { Choice, type ChoiceOption } from "../../components/Choice.tsx";
 import {
   useAppStore,
   type DotLabel,
@@ -14,42 +12,7 @@ import {
   tuning,
 } from "../../theory/index.ts";
 
-type Option<T> = { value: T; text: string };
-
-/** A row of text toggles with an underline on the pressed one (like Triads / Sevenths). */
-function Choice<T extends string | number | boolean>({
-  name,
-  options,
-  value,
-  onChange,
-}: {
-  name: string;
-  options: Option<T>[];
-  value: T;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <div className="choice" role="group" aria-label={name}>
-      <span className="choice-name" aria-hidden="true">
-        {name}
-      </span>
-      {options.map((o) => (
-        <button
-          key={String(o.value)}
-          type="button"
-          aria-pressed={o.value === value}
-          onClick={() => {
-            onChange(o.value);
-          }}
-        >
-          {o.text}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-const LABELS: Option<DotLabel>[] = [
+const LABELS: ChoiceOption<DotLabel>[] = [
   { value: "note", text: "Note" },
   { value: "degree", text: "Degree" },
   { value: "interval", text: "Interval" },
@@ -60,7 +23,6 @@ const LABELS: Option<DotLabel>[] = [
 export function FretboardBar({ upright }: { upright: boolean }) {
   const settings = useAppStore((s) => s.fretboard);
   const setFretboard = useAppStore((s) => s.setFretboard);
-  const selection = useAppStore((s) => s.selection);
   const [open, setOpen] = useState(false);
   const panelId = useId();
 
@@ -70,13 +32,8 @@ export function FretboardBar({ upright }: { upright: boolean }) {
   const set = (patch: Partial<FretboardSettings>) => {
     setFretboard(patch);
   };
-  // The focus line describes the scale view; shape modes say what they show below.
-  const mode = useAppStore((s) => s.shapes.mode);
-  const chord = mode === "scale" ? selection.primary.chord : undefined;
-  const counted =
-    settings.label === "degree" || settings.label === "interval"
-      ? labelReference(selection)
-      : undefined;
+  // Guide tones always name their notes, so the label choice steps aside.
+  const guide = useAppStore((s) => s.shapes.mode === "guide");
 
   return (
     <>
@@ -97,30 +54,19 @@ export function FretboardBar({ upright }: { upright: boolean }) {
             <path d={open ? "M2 8l4-4 4 4" : "M2 4l4 4 4-4"} />
           </svg>
         </button>
-        {chord && (
-          <span className="board-focus">
-            Showing{" "}
-            <b>
-              <Spelled text={chordLabel(chord)} />
-            </b>
-            : its chord tones glow, the key&apos;s other notes are dim
-            {counted && (
-              <>
-                {" · "}
-                {settings.label === "degree" ? "degrees" : "intervals"} count
-                from <Spelled text={counted} />
-              </>
-            )}
-          </span>
+        {guide ? (
+          <span className="board-note">Guide tones are named by note</span>
+        ) : (
+          <Choice
+            name="Labels"
+            showName={false}
+            options={LABELS}
+            value={settings.label}
+            onChange={(label) => {
+              set({ label });
+            }}
+          />
         )}
-        <Choice
-          name="Labels"
-          options={LABELS}
-          value={settings.label}
-          onChange={(label) => {
-            set({ label });
-          }}
-        />
       </div>
       {open && (
         <div className="board-settings" id={panelId}>
