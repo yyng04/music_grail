@@ -3,7 +3,8 @@ import { Spelled } from "../../components/Spelled.tsx";
 import { spokenName } from "../../components/spelling.ts";
 import type { Dot, Shape } from "../../relations/index.ts";
 import { useAppStore } from "../../state/index.ts";
-import { fretsText, type BoardModel } from "./shapeModel.ts";
+import { unlockAudio } from "../../audio/index.ts";
+import { fretsText, playShape, type BoardModel } from "./shapeModel.ts";
 
 type TileDot = Pick<Dot, "string" | "fret" | "role">;
 
@@ -240,7 +241,11 @@ export function ShapeStrip({
               aria-pressed={i === lit}
               aria-label={t.label}
               tabIndex={i === lit || (lit < 0 && i === 0) ? 0 : -1}
-              onClick={t.pick}
+              onClick={() => {
+                unlockAudio();
+                t.pick();
+                playShape();
+              }}
             >
               {t.diagram}
               <span className="tile-name">{t.name}</span>

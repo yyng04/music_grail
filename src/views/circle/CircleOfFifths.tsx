@@ -34,7 +34,8 @@ import {
   type Column,
   type Ring,
 } from "../../relations/index.ts";
-import { useAppStore } from "../../state/index.ts";
+import { playKeys, unlockAudio } from "../../audio/index.ts";
+import { appStore, useAppStore } from "../../state/index.ts";
 import type { Target } from "../../theory/index.ts";
 import {
   arc,
@@ -286,8 +287,11 @@ export function CircleOfFifths() {
     fired: false,
   });
   const choose = (target: Target, asCompare: boolean) => {
+    unlockAudio();
     if (asCompare || armed) setCompare(target);
     else setPrimary(target);
+    const now = appStore.getState().selection;
+    playKeys(now.primary, now.compare);
   };
   const cellHandlers = (target: Target) => ({
     onMouseDown: (e: React.MouseEvent) => {

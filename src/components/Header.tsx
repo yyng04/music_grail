@@ -1,3 +1,8 @@
+import {
+  boardInstrument,
+  loadInstrument,
+  unlockAudio,
+} from "../audio/index.ts";
 import { useAppStore } from "../state/index.ts";
 import { Spelled } from "./Spelled.tsx";
 import { targetName } from "./spelling.ts";
@@ -52,6 +57,12 @@ export function Header() {
           type="button"
           aria-pressed={audioEnabled}
           onClick={() => {
+            if (!audioEnabled) {
+              // The click itself starts the audio context, then the samples load.
+              unlockAudio();
+              void loadInstrument("guitar");
+              if (boardInstrument() === "bass") void loadInstrument("bass");
+            }
             setAudioEnabled(!audioEnabled);
           }}
         >

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canonicalChord,
   chordInfo,
+  chordVoicing,
   degreeLabel,
   detectChords,
   fromTonalInterval,
@@ -193,5 +194,16 @@ describe("enharmonic spelling", () => {
     expect(
       enharmonicKey({ tonic: "A", kind: "harmonic-minor" }),
     ).toBeUndefined();
+  });
+});
+
+describe("chord voicing for circle and chord clicks", () => {
+  it.each([
+    ["Gmaj7", "G3 B3 D4 F#4"],
+    ["C", "C3 E3 G3"],
+    ["Bdim", "B3 D4 F4"],
+    ["F#m7b5", "F#3 A3 C4 E4"],
+  ])("%s → %s", (symbol, notes) => {
+    expect(chordVoicing(symbol, 3)).toEqual(notes.split(" "));
   });
 });

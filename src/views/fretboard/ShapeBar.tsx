@@ -4,8 +4,9 @@ import { Spelled } from "../../components/Spelled.tsx";
 import { chordLabel, spokenChord } from "../../components/spelling.ts";
 import { diatonicChords } from "../../relations/index.ts";
 import { HARMONIES, useAppStore, type ShapeState } from "../../state/index.ts";
+import { chordPart, play, unlockAudio } from "../../audio/index.ts";
 import { ChordChips } from "./ChordChips.tsx";
-import { MODES, PAIRS, type BoardModel } from "./shapeModel.ts";
+import { MODES, PAIRS, playShape, type BoardModel } from "./shapeModel.ts";
 
 /**
  * The controls directly above the board: the Show modes, one row of
@@ -33,9 +34,11 @@ export function ShapeBar({
   };
   // Choosing a chord here also sets the chord list's size, so the panel shows the same chord.
   const pickChord = (symbol: string, size: boolean) => {
+    unlockAudio();
     setSevenths(size);
     setFocusChord("primary", symbol);
     set({});
+    playShape();
   };
 
   const strings = model.sets.length > 0 && (
@@ -83,10 +86,12 @@ export function ShapeBar({
         sevenths={sevenths}
         value={primary.chord}
         onPick={(symbol) => {
+          unlockAudio();
           setFocusChord(
             "primary",
             primary.chord === symbol ? undefined : symbol,
           );
+          if (primary.chord !== symbol) play("guitar", [chordPart(symbol)]);
         }}
       />
     );

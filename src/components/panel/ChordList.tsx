@@ -1,4 +1,5 @@
 import { compareSummary, diatonicChords } from "../../relations/index.ts";
+import { chordPart, play, unlockAudio } from "../../audio/index.ts";
 import { useAppStore } from "../../state/index.ts";
 import { Spelled } from "../Spelled.tsx";
 import { chordLabel, spokenChord } from "../spelling.ts";
@@ -59,10 +60,13 @@ export function ChordList() {
               aria-pressed={primary.chord === c.symbol}
               aria-label={`${spokenChord(c.symbol)}, chord ${String(c.degree)}${compare && shared.has(c.symbol) ? `, also in ${compare.tonic}` : ""}`}
               onClick={() => {
+                unlockAudio();
                 setFocusChord(
                   "primary",
                   primary.chord === c.symbol ? undefined : c.symbol,
                 );
+                if (primary.chord !== c.symbol)
+                  play("guitar", [chordPart(c.symbol)]);
               }}
             >
               <span className="numeral">

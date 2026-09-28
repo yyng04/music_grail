@@ -1,5 +1,5 @@
 import { Chord } from "tonal";
-import { fromTonalInterval } from "./intervals.ts";
+import { fromTonalInterval, transpose } from "./intervals.ts";
 
 /** One suffix per chord type, so every symbol in the app has one spelling. */
 const SUFFIX: Record<string, string> = {
@@ -49,4 +49,15 @@ export function canonicalChord(symbol: string): string | undefined {
 /** Chord symbols that match these spelled notes, best first, canonical form. */
 export function detectChords(notes: readonly string[]): string[] {
   return Chord.detect([...notes]).flatMap((s) => canonicalChord(s) ?? []);
+}
+
+/**
+ * A chord's notes upward from its root, with octaves: ("Gmaj7", 3) →
+ * G3 B3 D4 F#4. Circle and chord clicks use the octave from C3 to B3.
+ */
+export function chordVoicing(symbol: string, octave: number): string[] {
+  const info = chordInfo(symbol);
+  if (!info) return [];
+  const root = `${info.root}${String(octave)}`;
+  return info.intervals.map((iv) => transpose(root, iv));
 }

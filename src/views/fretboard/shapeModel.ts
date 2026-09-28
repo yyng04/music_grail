@@ -1,6 +1,7 @@
 // What the fretboard shows for the Show state: the notes on the board,
 // the shapes for the strip, and the plain title line that says what is shown.
 import { useMemo } from "react";
+import { boardInstrument, play, unlockAudio } from "../../audio/index.ts";
 import {
   chordLabel,
   spokenName,
@@ -524,10 +525,27 @@ export function stepPatch(
   return j === model.lit || j < 0 ? undefined : { shape: j };
 }
 
-/** Steps the strip on the store's current state; false at either end. */
+/**
+ * Plays the shape on the board: arpeggiated then together, then the next
+ * chord's guide tones. In Scale, nothing (a position is not a chord).
+ */
+export function playShape(): void {
+  const model = modelOf(appStore.getState());
+  if (model.sound.length === 0) return;
+  play(boardInstrument(), [
+    { notes: model.sound, style: model.soundNext.length ? "block" : "chord" },
+    { notes: model.soundNext, style: "block" },
+  ]);
+}
+
+/** Steps the strip on the store's current state, and plays the new shape; false at either end. */
 export function stepStrip(dir: 1 | -1): boolean {
+  unlockAudio();
   const state = appStore.getState();
   const patch = stepPatch(state.shapes, modelOf(state), dir);
-  if (patch) state.setShapes(patch);
+  if (patch) {
+    state.setShapes(patch);
+    playShape();
+  }
   return patch !== undefined;
 }

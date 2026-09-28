@@ -1,3 +1,4 @@
+import { boardInstrument, play, unlockAudio } from "../../audio/index.ts";
 import { useMediaQuery } from "../../hooks/useMediaQuery.ts";
 import { useAppStore } from "../../state/index.ts";
 import { tuning } from "../../theory/index.ts";
@@ -38,6 +39,11 @@ export function Fretboard() {
         bare={settings.label === "none" && model.mode !== "guide"}
         model={model}
         onStep={step}
+        onNote={(note) => {
+          // A dot plays its exact pitch, in the octave it sounds on the neck.
+          unlockAudio();
+          play(boardInstrument(), [{ notes: [note.pitch], style: "note" }]);
+        }}
       />
     </div>
   );
