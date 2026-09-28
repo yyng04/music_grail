@@ -75,32 +75,36 @@ export function saveFretboard(settings: FretboardSettings): void {
 
 export type Mode = "scale" | "triads" | "two" | "guide";
 export type Harmony = "3rds" | "6ths" | "4ths" | "octaves";
+export const HARMONIES: readonly Harmony[] = [
+  "3rds",
+  "6ths",
+  "4ths",
+  "octaves",
+];
 
-/** The Show and Position controls. Kept for the visit only. */
+/** The Show control and each mode's settings. Kept in the URL hash. */
 export type ShapeState = {
   mode: Mode;
+  /** Two-note chords: tones of the chord, or the key's scale in one interval. */
+  two: "pairs" | "harmony";
   /** CAGED letter, or null for the whole neck. */
   position: string | null;
-  /** Triads: index into the string sets (strings 1 2 3 first). */
-  set: number;
-  /** Index of the lit shape among those shown. */
+  /** The string set for the current mode, as tuning indices ("345"); null is the mode's default. */
+  strings: string | null;
+  /** Index of the shape shown, among those in the position. */
   shape: number;
-  two: "pairs" | "harmony";
   pair: [ShapeRole, ShapeRole];
   harmony: Harmony;
-  /** Harmony: the string pair, by string numbers ("2 3"). */
-  strings2: string;
   /** Guide tones: the chord moved to; unset means the chord a 5th below. */
   next?: string;
 };
 
 export const DEFAULT_SHAPES: ShapeState = {
   mode: "scale",
-  position: null,
-  set: 0,
-  shape: 0,
   two: "pairs",
+  position: null,
+  strings: null,
+  shape: 0,
   pair: ["third", "seventh"],
   harmony: "3rds",
-  strings2: "2 3",
 };

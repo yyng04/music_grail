@@ -8,8 +8,11 @@ import {
   checkFretboard,
   createAppStore,
   DEFAULT_FRETBOARD,
+  DEFAULT_SHAPES,
   formatHash,
+  parseShapes,
   parseView,
+  type ShapeState,
   startHashSync,
 } from "../../src/state/index.ts";
 import { boardGeometry } from "../../src/views/fretboard/geometry.ts";
@@ -270,6 +273,77 @@ describe("fretboard settings", () => {
     expect(store.getState().fretboard.frets).toBe(24);
     store.getState().setFretboard({ frets: 20 });
     expect(store.getState().fretboard.frets).toBe(20);
+  });
+});
+
+describe("the Show state in the hash", () => {
+  const sel: Selection = { primary: { tonic: "G", kind: "major" } };
+
+  it("writes nothing for the plain scale, and nothing on the circle", () => {
+    expect(formatHash(sel, "fretboard", DEFAULT_SHAPES)).toBe(
+      "p=G-major&view=fretboard",
+    );
+    const triads: ShapeState = { ...DEFAULT_SHAPES, mode: "triads" };
+    expect(formatHash(sel, "circle", triads)).toBe("p=G-major");
+  });
+
+  it("keeps mode, strings and shape, leaving defaults out", () => {
+    const shapes: ShapeState = {
+      ...DEFAULT_SHAPES,
+      mode: "two",
+      two: "pairs",
+      strings: "45",
+      shape: 2,
+    };
+    const hash = formatHash(sel, "fretboard", shapes);
+    expect(hash).toBe("p=G-major&view=fretboard&show=pairs&strings=45&shape=3");
+    expect(parseShapes(hash)).toEqual({ ...shapes, next: undefined });
+  });
+
+  it("round-trips a position, a pair, an interval and a next chord", () => {
+    const guide: ShapeState = {
+      ...DEFAULT_SHAPES,
+      mode: "guide",
+      position: "E",
+      strings: "23",
+      shape: 1,
+      next: "D7",
+    };
+    const hash = formatHash(sel, "fretboard", guide);
+    expect(hash).toBe(
+      "p=G-major&view=fretboard&show=guide&pos=E&strings=23&shape=2&next=D-7",
+    );
+    expect(parseShapes(hash)).toEqual(guide);
+    const pairs: ShapeState = {
+      ...DEFAULT_SHAPES,
+      mode: "two",
+      pair: ["root", "fifth"],
+    };
+    expect(parseShapes(formatHash(sel, "fretboard", pairs))).toEqual({
+      ...pairs,
+      next: undefined,
+    });
+    const sixths: ShapeState = {
+      ...DEFAULT_SHAPES,
+      mode: "two",
+      two: "harmony",
+      harmony: "6ths",
+    };
+    expect(formatHash(sel, "fretboard", sixths)).toContain(
+      "show=harmony&in=6ths",
+    );
+    expect(parseShapes(formatHash(sel, "fretboard", sixths))).toEqual({
+      ...sixths,
+      next: undefined,
+    });
+  });
+
+  it("ignores values it cannot read", () => {
+    expect(
+      parseShapes(
+        "show=banjo&pos=Q&strings=abc&shape=-2&pair=2-9&in=9ths&next=zz",
+      ),
+    ).toEqual({ ...DEFAULT_SHAPES, next: undefined });
   });
 });
 

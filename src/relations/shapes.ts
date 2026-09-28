@@ -9,27 +9,33 @@ import {
   intervalBetween,
   midi,
   parentMajorTonic,
+  pitchClass,
   scaleNotes,
   type Target,
 } from "../theory/index.ts";
 import { roleOf } from "./degrees.ts";
 
 export type ShapeRole = "root" | "third" | "fifth" | "seventh" | "other";
-export type Tone = { name: string; role: ShapeRole; degree: string };
-export type Dot = {
-  string: number;
-  fret: number;
+/** A note of a chord or key, with its degree ("b3") and interval ("m3") from the chord root or tonic. */
+export type Tone = {
   name: string;
   role: ShapeRole;
-  label: string;
+  degree: string;
+  interval: string;
 };
-export type Move = { string: number; from: number; to: number; held: boolean };
+export type Dot = Tone & { string: number; fret: number };
+export type Move = { string: number; from: number; to: number };
 export type Shape = {
   dots: Dot[];
   low: number;
   high: number;
-  /** Short name for steppers and tiles: "1st inversion", "M3", "Am7 → D7". */
-  tag: string;
+  /** Triads: "Root position", "1st inversion", "2nd inversion". */
+  tag?: string;
+  /** Triads: the note on the lowest string. */
+  bass?: string;
+  /** Two-note shapes: from the lower note to the upper, quality-first ("d5"). */
+  interval?: string;
+  /** Guide tones: where each note goes in the next chord, on the same string. */
   moves?: Move[];
   next?: Dot[];
 };
@@ -41,107 +47,118 @@ const ROLE: Record<string, ShapeRole> = {
   "7": "seventh",
 };
 
+/** A chord's notes with their role, degree and interval above the root. */
 export function chordTones(symbol: string): Tone[] {
   const c = chordInfo(symbol);
   if (!c) return [];
   return c.notes.map((name, i) => {
-    const iv = c.intervals[i] ?? "P1";
+    const interval = c.intervals[i] ?? "P1";
     return {
       name,
-      role: ROLE[iv.replace(/^[PMmAd]+/, "")] ?? "other",
-      degree: degreeLabel(iv),
+      role: ROLE[interval.replace(/^[PMmAd]+/, "")] ?? "other",
+      degree: degreeLabel(interval),
+      interval,
     };
   });
 }
 
-const toneAt = (open: string, fret: number, tones: Tone[]) => {
+/** A key's note as a tone: its role, degree and interval above the tonic. */
+export function keyTone(name: string, key: Target): Tone {
+  const role = roleOf(name, key);
+  const interval = intervalBetween(key.tonic, name);
+  return {
+    name,
+    role: role === "outside" ? "other" : role,
+    degree: degreeLabel(interval),
+    interval,
+  };
+}
+
+export type StringSet = {
+  /** Tuning indices joined, lowest first: "345". Stable for a given tuning. */
+  id: string;
+  /** Tuning indices, lowest string first. */
+  strings: number[];
+  /** Open notes, low to high: "G B E". */
+  name: string;
+};
+
+/**
+ * Groups of `size` strings, highest group first, named by their open notes
+ * from low to high ("G B E", "D G B", ...). With `skip`, every other string
+ * (for 6ths and octaves on two strings: "D B" skips the G string).
+ */
+export function stringSets(
+  tuning: readonly string[],
+  size: number,
+  skip = false,
+): StringSet[] {
+  const step = skip ? 2 : 1;
+  const out: StringSet[] = [];
+  for (let lo = tuning.length - 1 - step * (size - 1); lo >= 0; lo--) {
+    const strings = Array.from({ length: size }, (_, i) => lo + i * step);
+    out.push({
+      id: strings.join(""),
+      strings,
+      name: strings.map((s) => pitchClass(tuning[s] ?? "")).join(" "),
+    });
+  }
+  return out;
+}
+
+const toneAt = (open: string, fret: number, tones: readonly Tone[]) => {
   const c = chroma(fretPitch(open, fret));
   return tones.find((t) => chroma(t.name) === c);
 };
-const dot = (string: number, fret: number, t: Tone): Dot => ({
+const at = (string: number, fret: number, t: Tone): Dot => ({
+  ...t,
   string,
   fret,
-  name: t.name,
-  role: t.role,
-  label: t.degree,
 });
-const span = (frets: number[]) => Math.max(...frets) - Math.min(...frets);
 const byNeck = (a: Shape, b: Shape) => a.low - b.low || a.high - b.high;
+const INVERSION: Partial<Record<ShapeRole, string>> = {
+  root: "Root position",
+  third: "1st inversion",
+  fifth: "2nd inversion",
+};
 
-/** Every closed triad shape on three adjacent strings: one chord tone per string, all three tones, within 4 frets. */
+/**
+ * Every closed triad shape on three strings: exactly the three chord tones,
+ * one per string, within 4 frets, named by the note in the bass.
+ * A 7th chord uses its triad.
+ */
 export function triadShapes(
-  strings: readonly string[],
-  set: readonly [number, number, number],
-  tones: Tone[],
+  tuning: readonly string[],
+  set: readonly number[],
+  tones: readonly Tone[],
   frets: number,
 ): Shape[] {
   const triad = tones.slice(0, 3);
+  const opens = set.map((s) => tuning[s] ?? "E2");
+  const [s0, s1, s2] = set;
+  const [a, b, c] = opens;
+  if (s0 === undefined || s1 === undefined || s2 === undefined) return [];
+  if (!a || !b || !c) return [];
   const out: Shape[] = [];
-  const [a, b, c] = set.map((s) => strings[s] ?? "E2") as [
-    string,
-    string,
-    string,
-  ];
   for (let f0 = 0; f0 <= frets; f0++)
     for (let f1 = Math.max(0, f0 - 3); f1 <= Math.min(frets, f0 + 3); f1++)
       for (let f2 = Math.max(0, f0 - 3); f2 <= Math.min(frets, f0 + 3); f2++) {
-        if (span([f0, f1, f2]) > 3) continue;
-        const t = [
-          toneAt(a, f0, triad),
-          toneAt(b, f1, triad),
-          toneAt(c, f2, triad),
-        ];
-        if (t.some((x) => !x) || new Set(t.map((x) => x?.role)).size !== 3)
-          continue;
-        const [t0, t1, t2] = t as [Tone, Tone, Tone];
-        const bass = t0.role;
+        const low = Math.min(f0, f1, f2);
+        const high = Math.max(f0, f1, f2);
+        if (high - low > 3) continue;
+        const t0 = toneAt(a, f0, triad);
+        const t1 = toneAt(b, f1, triad);
+        const t2 = toneAt(c, f2, triad);
+        if (!t0 || !t1 || !t2) continue;
+        if (new Set([t0.role, t1.role, t2.role]).size !== 3) continue;
         out.push({
-          dots: [dot(set[0], f0, t0), dot(set[1], f1, t1), dot(set[2], f2, t2)],
-          low: Math.min(f0, f1, f2),
-          high: Math.max(f0, f1, f2),
-          tag:
-            bass === "root"
-              ? "Root position"
-              : bass === "third"
-                ? "1st inversion"
-                : "2nd inversion",
+          dots: [at(s0, f0, t0), at(s1, f1, t1), at(s2, f2, t2)],
+          low,
+          high,
+          tag: INVERSION[t0.role] ?? "",
+          bass: t0.name,
         });
       }
-  return out.sort(byNeck);
-}
-
-/** Two-note shapes on the given string pairs: lower note on the lower string, within 4 frets. */
-function twoNote(
-  strings: readonly string[],
-  pairs: [number, number][],
-  frets: number,
-  /** For a pitch on the lower string: its spelling and the upper note (name, MIDI pitch). */
-  upper: (
-    lowerPitch: string,
-  ) => { low: string; name: string; pitch: number } | undefined,
-  tone: (name: string) => Tone,
-  tag: (lower: string, upper: string) => string,
-): Shape[] {
-  const out: Shape[] = [];
-  for (const [lo, hi] of pairs) {
-    const openLo = strings[lo] ?? "E2";
-    const openHi = strings[hi] ?? "E4";
-    for (let f = 0; f <= frets; f++) {
-      const pitch = fretPitch(openLo, f);
-      const up = upper(pitch);
-      if (!up) continue;
-      const g = up.pitch - midi(openHi);
-      if (g < 0 || g > frets || Math.abs(g - f) > 3) continue;
-      const lowTone = tone(up.low);
-      const upTone = tone(up.name);
-      out.push({
-        dots: [dot(lo, f, lowTone), dot(hi, g, upTone)],
-        low: Math.min(f, g),
-        high: Math.max(f, g),
-        tag: tag(lowTone.name, upTone.name),
-      });
-    }
-  }
   return out.sort(byNeck);
 }
 
@@ -150,110 +167,173 @@ const intervalName = (a: string, b: string) => {
   return iv === "P1" ? "P8" : iv;
 };
 
-/** The key harmonised in one diatonic interval on a pair of strings (3rds, 6ths, 4ths, octaves). */
+/**
+ * Two-note shapes on one pair of strings, lower note on the lower string,
+ * within 4 frets. `upper` names the note above a pitch on the lower string.
+ */
+function twoNote(
+  tuning: readonly string[],
+  [lo, hi]: readonly [number, number],
+  frets: number,
+  upper: (
+    lowerPitch: string,
+  ) => { low: Tone; high: Tone; pitch: number } | undefined,
+): Shape[] {
+  const openLo = tuning[lo] ?? "E2";
+  const openHi = tuning[hi] ?? "E4";
+  const out: Shape[] = [];
+  for (let f = 0; f <= frets; f++) {
+    const up = upper(fretPitch(openLo, f));
+    if (!up) continue;
+    const g = up.pitch - midi(openHi);
+    if (g < 0 || g > frets || Math.abs(g - f) > 3) continue;
+    out.push({
+      dots: [at(lo, f, up.low), at(hi, g, up.high)],
+      low: Math.min(f, g),
+      high: Math.max(f, g),
+      interval: intervalName(up.low.name, up.high.name),
+    });
+  }
+  return out.sort(byNeck);
+}
+
+/** The key harmonised in one diatonic interval on a pair of strings (3rds: 2 steps, 6ths: 5, 4ths: 3, octaves: 7). */
 export function harmonyShapes(
-  strings: readonly string[],
+  tuning: readonly string[],
   key: Target,
   steps: number,
-  pair: [number, number],
+  pair: readonly [number, number],
   frets: number,
 ): Shape[] {
   const scale = scaleNotes(key);
-  const tone = (name: string): Tone => ({
-    name,
-    role: (roleOf(name, key) === "outside"
-      ? "other"
-      : roleOf(name, key)) as ShapeRole,
-    degree: degreeLabel(intervalBetween(key.tonic, name)),
+  return twoNote(tuning, pair, frets, (pitch) => {
+    const i = scale.findIndex((n) => chroma(n) === chroma(pitch));
+    const low = scale[i];
+    const high = scale[(i + steps) % 7];
+    if (i < 0 || !low || !high) return undefined;
+    const up = (chroma(high) - chroma(low) + 12) % 12 || 12;
+    return {
+      low: keyTone(low, key),
+      high: keyTone(high, key),
+      pitch: midi(pitch) + up,
+    };
   });
-  return twoNote(
-    strings,
-    [pair],
-    frets,
-    (pitch) => {
-      const i = scale.findIndex((n) => chroma(n) === chroma(pitch));
-      const low = scale[i];
-      const target = scale[(i + steps) % 7];
-      if (i < 0 || !low || !target) return undefined;
-      const d = (chroma(target) - chroma(low) + 12) % 12 || 12;
-      return { low, name: target, pitch: midi(pitch) + d };
-    },
-    tone,
-    intervalName,
-  );
 }
 
-/** A pair of chord tones on neighbouring strings or with one string skipped, either note on top. */
+/** Two tones of a chord on one pair of strings, either note on top. */
 export function pairShapes(
-  strings: readonly string[],
+  tuning: readonly string[],
+  pair: readonly [number, number],
   a: Tone,
   b: Tone,
   frets: number,
 ): Shape[] {
-  // Neighbouring strings, and one string skipped (root + 7th needs the skip).
-  const adjacent = strings.flatMap((_, i) =>
-    [i + 1, i + 2]
-      .filter((j) => j < strings.length)
-      .map((j) => [i, j] as [number, number]),
-  );
-  const tones = [a, b];
-  return twoNote(
-    strings,
-    adjacent,
-    frets,
-    (pitch) => {
-      const low = tones.find((t) => chroma(t.name) === chroma(pitch));
-      const up = tones.find((t) => t !== low);
-      if (!low || !up) return undefined;
-      const d = (chroma(up.name) - chroma(low.name) + 12) % 12;
-      return { low: low.name, name: up.name, pitch: midi(pitch) + d };
-    },
-    (name) => tones.find((t) => t.name === name) ?? a,
-    intervalName,
+  return twoNote(tuning, pair, frets, (pitch) => {
+    const low = [a, b].find((t) => chroma(t.name) === chroma(pitch));
+    const high = low === a ? b : a;
+    if (!low) return undefined;
+    const up = (chroma(high.name) - chroma(low.name) + 12) % 12;
+    return { low, high, pitch: midi(pitch) + up };
+  });
+}
+
+/** A 7th chord's guide tones: its 3rd and 7th (Dm7 → F, C). */
+export function guideTones(symbol: string): string[] {
+  const tones = chordTones(symbol);
+  return (["third", "seventh"] as const).flatMap(
+    (r) => tones.find((t) => t.role === r)?.name ?? [],
   );
 }
 
+export type GuideMotion = { from: string; to: string; semitones: number };
+
+/** Signed distance between two pitch classes the short way, -6 to 5 semitones. */
+const shortest = (from: string, to: string) =>
+  ((chroma(to) - chroma(from) + 18) % 12) - 6;
+
 /**
- * Guide tones (3rd and 7th) of one chord on two strings, each moved to
- * the nearest guide tone of the next chord on the same string (held, or a
- * half or whole step away).
+ * How each guide tone of one chord moves to a guide tone of the next, the
+ * shortest way, each to a different note: Am7 → D7 is C held, G → F# (-1).
+ */
+export function guideToneMotion(from: string, to: string): GuideMotion[] {
+  const a = guideTones(from);
+  const b = guideTones(to);
+  const [a3, a7] = a;
+  const [b3, b7] = b;
+  if (!a3 || !a7 || !b3 || !b7) return [];
+  const pairing = (x: string, y: string) => [
+    { from: a3, to: x, semitones: shortest(a3, x) },
+    { from: a7, to: y, semitones: shortest(a7, y) },
+  ];
+  const straight = pairing(b3, b7);
+  const crossed = pairing(b7, b3);
+  const cost = (m: GuideMotion[]) =>
+    m.reduce((sum, x) => sum + Math.abs(x.semitones), 0);
+  return cost(crossed) < cost(straight) ? crossed : straight;
+}
+
+const STEP_WORDS: Record<number, string> = {
+  1: "a half step",
+  2: "a whole step",
+  3: "a minor 3rd",
+  4: "a major 3rd",
+  5: "a 4th",
+  6: "a tritone",
+};
+
+/** The motion in words: "B held, F# → E, a whole step down." */
+export function describeMotion(motion: readonly GuideMotion[]): string {
+  const parts = motion.map((m) =>
+    m.semitones === 0
+      ? { moves: false, text: `${m.from} held` }
+      : {
+          moves: true,
+          text: `${m.from} → ${m.to}, ${STEP_WORDS[Math.abs(m.semitones)] ?? ""} ${m.semitones < 0 ? "down" : "up"}`,
+        },
+  );
+  // Two moving notes are kept apart with a semicolon, since each has a comma.
+  const joint = parts.every((p) => p.moves) ? "; " : ", ";
+  return `${parts.map((p) => p.text).join(joint)}.`;
+}
+
+/**
+ * Guide tones (3rd and 7th) of one chord on a pair of strings, each moved on
+ * its own string to the guide tone it goes to in the next chord.
  */
 export function guideShapes(
-  strings: readonly string[],
+  tuning: readonly string[],
+  pair: readonly [number, number],
   from: string,
   to: string,
   frets: number,
 ): Shape[] {
-  const guide = (s: string) =>
-    chordTones(s).filter((t) => t.role === "third" || t.role === "seventh");
-  const [third, seventh] = guide(from);
-  const next = guide(to);
-  if (!third || !seventh) return [];
-  return pairShapes(strings, third, seventh, frets).flatMap((shape) => {
+  const tones = chordTones(from);
+  const nextTones = chordTones(to);
+  const third = tones.find((t) => t.role === "third");
+  const seventh = tones.find((t) => t.role === "seventh");
+  const motion = guideToneMotion(from, to);
+  if (!third || !seventh || motion.length !== 2) return [];
+  return pairShapes(tuning, pair, third, seventh, frets).flatMap((shape) => {
     const moves: Move[] = [];
-    const nextDots: Dot[] = [];
+    const next: Dot[] = [];
     for (const d of shape.dots) {
-      const open = strings[d.string] ?? "E2";
-      let best: { fret: number; tone: Tone } | undefined;
-      for (const step of [0, -1, 1, -2, 2]) {
-        const f = d.fret + step;
-        if (f < 0 || f > frets) continue;
-        const t = toneAt(open, f, next);
-        if (t) {
-          best = { fret: f, tone: t };
-          break;
-        }
-      }
-      if (!best) return [];
-      moves.push({
-        string: d.string,
-        from: d.fret,
-        to: best.fret,
-        held: best.fret === d.fret,
-      });
-      nextDots.push(dot(d.string, best.fret, best.tone));
+      const m = motion.find((x) => x.from === d.name);
+      const tone = nextTones.find((t) => t.name === m?.to);
+      const fret = d.fret + (m?.semitones ?? 0);
+      if (!m || !tone || fret < 0 || fret > frets) return [];
+      moves.push({ string: d.string, from: d.fret, to: fret });
+      next.push(at(d.string, fret, tone));
     }
-    return [{ ...shape, moves, next: nextDots, tag: `${from} → ${to}` }];
+    const all = [...shape.dots, ...next].map((d) => d.fret);
+    return [
+      {
+        ...shape,
+        low: Math.min(...all),
+        high: Math.max(...all),
+        moves,
+        next,
+      },
+    ];
   });
 }
 

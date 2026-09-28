@@ -3,6 +3,8 @@ import {
   degreeOf,
   detectChord,
   diatonicChords,
+  guideToneMotion as motionOf,
+  guideTones as guideTonesOf,
   isDiatonic,
   keyOfDominant,
   membership,
@@ -237,9 +239,20 @@ describe("degrees and roles", () => {
   });
 });
 
-describe("guide tones (v2, Chords tab)", () => {
-  it.todo(`guideTones: ${String(Object.keys(guideTones).length)} fixtures`);
-  it.todo(`guideToneMotion: ${String(guideToneMotion.length)} fixtures`);
+describe("guide tones (3rd and 7th)", () => {
+  it.each(Object.entries(guideTones))("%s: %s", (chord, tones) => {
+    expect(guideTonesOf(chord)).toEqual(words(tones));
+  });
+
+  it.each(guideToneMotion)("$chords.0 → $chords.1 → $chords.2", (fx) => {
+    fx.steps.forEach((step, i) => {
+      const motion = motionOf(fx.chords[i] ?? "", fx.chords[i + 1] ?? "");
+      expect(motion.find((m) => m.semitones === 0)?.from).toBe(step.held);
+      const moves = motion.find((m) => m.semitones !== 0);
+      expect({ from: moves?.from, to: moves?.to }).toEqual(step.moves);
+      expect(Math.abs(moves?.semitones ?? 0)).toBe(1);
+    });
+  });
 });
 
 describe("harmonic minor", () => {

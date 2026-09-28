@@ -1,4 +1,4 @@
-import { formatHash, parseHash, parseView } from "./hash.ts";
+import { formatHash, parseHash, parseShapes, parseView } from "./hash.ts";
 import type { AppStore } from "./store.ts";
 
 type HashWindow = Pick<
@@ -15,8 +15,8 @@ export function startHashSync(
   win: HashWindow = window,
 ): () => void {
   const write = () => {
-    const { selection, view } = store.getState();
-    const hash = `#${formatHash(selection, view)}`;
+    const { selection, view, shapes } = store.getState();
+    const hash = `#${formatHash(selection, view, shapes)}`;
     if (win.location.hash !== hash) win.history.replaceState(null, "", hash);
   };
 
@@ -27,12 +27,17 @@ export function startHashSync(
     state.setSelection(value);
     const view = parseView(win.location.hash);
     if (view !== state.view) state.setView(view);
+    state.setShapes(parseShapes(win.location.hash));
     write();
   };
 
   read();
   const unsubscribe = store.subscribe((state, previous) => {
-    if (state.selection !== previous.selection || state.view !== previous.view)
+    if (
+      state.selection !== previous.selection ||
+      state.view !== previous.view ||
+      state.shapes !== previous.shapes
+    )
       write();
   });
   win.addEventListener("hashchange", read);
