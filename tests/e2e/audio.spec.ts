@@ -26,7 +26,9 @@ test("nothing loads while muted", async ({ page }) => {
   const { requests } = watch(page);
   await page.goto("./#p=G-major&view=fretboard");
   await settle(page);
-  await page.getByRole("img", { name: "G 2, root, string 6, fret 3" }).click();
+  await page
+    .getByRole("button", { name: "G 2, root, string 6, fret 3" })
+    .click();
   await page.waitForTimeout(300);
   expect(requests.filter((u) => u.includes("/samples/"))).toEqual([]);
   // Tone.js is its own chunk, fetched only when sound is turned on.
@@ -43,7 +45,9 @@ test("sound on loads the guitar samples and plays clicks", async ({ page }) => {
     .poll(() => requests.filter((u) => u.includes("/samples/guitar/")).length)
     .toBe(17);
   expect(requests.some((u) => u.includes("/samples/bass/"))).toBe(false);
-  await page.getByRole("img", { name: /^G 4, root, string 1, fret 3/ }).click();
+  await page
+    .getByRole("button", { name: /^G 4, root, string 1, fret 3/ })
+    .click();
   await page.keyboard.press("ArrowRight");
   await page.getByRole("button", { name: "Circle" }).click();
   await page.getByRole("button", { name: "D major", exact: true }).click();
@@ -65,7 +69,7 @@ test("a bass loads its own samples", async ({ page }) => {
   await expect
     .poll(() => requests.filter((u) => u.includes("/samples/bass/")).length)
     .toBe(11);
-  await page.getByRole("img", { name: /^B 0, .*string 5, open/ }).click();
+  await page.getByRole("button", { name: /^B 0, .*string 5, open/ }).click();
   await page.waitForTimeout(500);
   expect(errors).toEqual([]);
 });

@@ -173,7 +173,7 @@ describe("guide-tone motion in words", () => {
 
   it("two moving notes are kept apart", () => {
     expect(describeMotion(guideToneMotion("Gmaj7", "Am7"))).toBe(
-      "B → C, a half step up; F# → G, a half step up.",
+      "B → C, a half step up. F# → G, a half step up.",
     );
   });
 

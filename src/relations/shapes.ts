@@ -291,9 +291,10 @@ export function describeMotion(motion: readonly GuideMotion[]): string {
           text: `${m.from} → ${m.to}, ${STEP_WORDS[Math.abs(m.semitones)] ?? ""} ${m.semitones < 0 ? "down" : "up"}`,
         },
   );
-  // Two moving notes are kept apart with a semicolon, since each has a comma.
-  const joint = parts.every((p) => p.moves) ? "; " : ", ";
-  return `${parts.map((p) => p.text).join(joint)}.`;
+  // Two moving notes become two sentences, since each already has a comma.
+  if (parts.every((p) => p.moves))
+    return parts.map((p) => `${p.text}.`).join(" ");
+  return `${parts.map((p) => p.text).join(", ")}.`;
 }
 
 /**

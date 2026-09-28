@@ -6,9 +6,11 @@ import {
 } from "motion/react";
 import {
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { HaloNote } from "../../components/HaloNote.tsx";
@@ -24,12 +26,14 @@ import {
   TOGGLE_COLUMNS,
   cellId,
   cellStates,
+  columnOf,
   columns,
   keyForCell,
   noteArcs,
   noteRing,
   turn,
   windowAngle,
+  type CellId,
   type CellState,
   type Column,
   type Ring,
@@ -320,6 +324,46 @@ export function CircleOfFifths() {
     },
   });
 
+  // Keyboard: the cells are one tab stop, starting on the current key's
+  // cell. ← → move round a ring, ↑ ↓ between rings, Enter chooses, Shift+Enter
+  // compares. Focus moves; the selection changes only on Enter.
+  const home = cellId(
+    selection.primary.kind === "minor" ||
+      selection.primary.kind === "harmonic-minor"
+      ? "middle"
+      : "outer",
+    columnOf(selection.primary),
+  );
+  const [focused, setFocused] = useState<CellId | null>(null);
+  const cellRefs = useRef(new Map<CellId, SVGPathElement>());
+  const hintId = useId();
+  const onCellKey = (
+    e: React.KeyboardEvent,
+    ringName: Ring,
+    index: number,
+    target: Target,
+  ) => {
+    const r = RINGS.indexOf(ringName);
+    let next: CellId | undefined;
+    if (e.key === "ArrowRight") next = cellId(ringName, (index + 1) % 12);
+    else if (e.key === "ArrowLeft") next = cellId(ringName, (index + 11) % 12);
+    else if (e.key === "ArrowUp")
+      next = cellId(RINGS[Math.max(0, r - 1)] ?? ringName, index);
+    else if (e.key === "ArrowDown")
+      next = cellId(
+        RINGS[Math.min(RINGS.length - 1, r + 1)] ?? ringName,
+        index,
+      );
+    else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      choose(target, e.shiftKey);
+      return;
+    } else return;
+    e.preventDefault();
+    setFocused(next);
+    cellRefs.current.get(next)?.focus();
+  };
+
   const labels = <Labels cols={cols} states={states} z={z} />;
   const primary = selection.primary;
 
@@ -332,6 +376,10 @@ export function CircleOfFifths() {
       role="group"
       aria-label={`Circle of fifths, showing ${spokenName(targetName(primary))}`}
     >
+      <desc id={hintId}>
+        Arrow keys move between keys, Enter chooses one, Shift and Enter
+        compares with it.
+      </desc>
       <defs>
         <radialGradient
           id="smoke"
@@ -524,11 +572,24 @@ export function CircleOfFifths() {
       {RINGS.map((ringName) =>
         cols.map((col) => {
           const target = keyForCell(ringName, col);
+          const id = cellId(ringName, col.index);
           return (
             <path
-              key={cellId(ringName, col.index)}
+              key={id}
+              ref={(el) => {
+                if (el) cellRefs.current.set(id, el);
+                else cellRefs.current.delete(id);
+              }}
               className="hit"
               role="button"
+              tabIndex={id === (focused ?? home) ? 0 : -1}
+              aria-describedby={hintId}
+              onFocus={() => {
+                setFocused(id);
+              }}
+              onKeyDown={(e) => {
+                onCellKey(e, ringName, col.index, target);
+              }}
               aria-label={
                 ringName === "inner"
                   ? `${spokenName(cellLabel(col, "inner").replace("°", " diminished"))}, selects ${spokenName(targetName(target))}`
@@ -569,7 +630,7 @@ export function CircleOfFifths() {
               }
             }}
           >
-            <title>{`Spell as ${col.alternate}`}</title>
+            <title>{`Spell as ${spokenName(col.alternate)}`}</title>
             <circle
               className="toggle-hit"
               cx={fmt(x)}

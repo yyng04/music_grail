@@ -36,6 +36,15 @@ button {
   outline: 1px solid var(--text);
   outline-offset: 4px;
 }
+/* Read by screen readers, not shown: a chord's spoken name after its symbol. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 p,
 h1,
@@ -96,6 +105,16 @@ ol {
 }
 .ambient-paused .scene * {
   animation-play-state: paused !important;
+}
+/* Reduced motion: every change is instant, the background glows stay still,
+   and the circle's windows jump (Motion reads the same setting). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .scene * {
@@ -179,6 +198,15 @@ ol {
   gap: 32px;
   padding: 0 48px 28px 24px;
   align-items: center;
+}
+/* Between phone and desktop there is no room for the circle beside the panel:
+   the circle takes the full width and the panel follows it. */
+@media (min-width: 761px) and (max-width: 1099px) {
+  .main {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 48px 40px;
+    gap: 28px;
+  }
 }
 .stage {
   display: grid;
@@ -614,6 +642,11 @@ ol {
   fill: transparent;
   cursor: pointer;
   outline: none;
+}
+.circle .hit:focus-visible {
+  fill: oklch(0.95 0.004 25 / 0.06);
+  stroke: var(--text);
+  stroke-width: 1.5;
 }
 .circle .hit:hover {
   fill: oklch(0.95 0.004 25 / 0.04);
@@ -1192,6 +1225,11 @@ ol {
 }
 .fret-dot.playable {
   cursor: pointer;
+}
+.fret-dot:focus-visible {
+  outline: 1px solid var(--text);
+  outline-offset: 3px;
+  border-radius: 50%;
 }
 /* Room above the board for a position's name and arrows, and below for its letters. */
 .fretboard:not(.upright) .board-scroll {

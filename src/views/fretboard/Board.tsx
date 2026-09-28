@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { HaloNote } from "../../components/HaloNote.tsx";
 import { spokenName } from "../../components/spelling.ts";
 import { useElementWidth } from "../../hooks/useElementWidth.ts";
@@ -106,6 +106,44 @@ export function Board({
   // The lit rim runs along the neck, bright at the nut end.
   const rimFlip = leftHanded && !upright;
   const { position } = model;
+
+  // Keyboard: the notes on the board are one tab stop. The arrow keys move to
+  // the nearest note in that direction on screen (so it works lying down and
+  // upright), Enter or Space plays it.
+  const keyOf = (n: BoardNote) => `${String(n.string)}-${String(n.fret)}`;
+  const shown = model.notes.filter((n) => n.shown);
+  const [focusKey, setFocusKey] = useState<string | null>(null);
+  const current = shown.find((n) => keyOf(n) === focusKey) ?? shown[0];
+  const dotRefs = useRef(new Map<string, HTMLSpanElement>());
+  const DIRS: Record<string, [number, number]> = {
+    ArrowRight: [1, 0],
+    ArrowLeft: [-1, 0],
+    ArrowDown: [0, 1],
+    ArrowUp: [0, -1],
+  };
+  const onDotKey = (e: React.KeyboardEvent, n: BoardNote) => {
+    if ((e.key === "Enter" || e.key === " ") && onNote) {
+      e.preventDefault();
+      onNote(n);
+      return;
+    }
+    const dir = DIRS[e.key];
+    if (!dir) return;
+    e.preventDefault();
+    const [x0, y0] = xy(g.dot(n.fret), across(n.string));
+    let best: { n: BoardNote; score: number } | undefined;
+    for (const m of shown) {
+      const [x, y] = xy(g.dot(m.fret), across(m.string));
+      const ahead = (x - x0) * dir[0] + (y - y0) * dir[1];
+      if (ahead <= 1) continue;
+      const aside = Math.abs((x - x0) * dir[1] - (y - y0) * dir[0]);
+      const score = ahead + 2 * aside;
+      if (!best || score < best.score) best = { n: m, score };
+    }
+    if (!best) return;
+    setFocusKey(keyOf(best.n));
+    dotRefs.current.get(keyOf(best.n))?.focus();
+  };
   // A window covers its frets, from the wire before the first to the last fret's wire.
   const winStart = (from: number) =>
     from === 0
@@ -392,11 +430,32 @@ export function Board({
 
         {model.notes.map((n) => (
           <span
-            key={`${String(n.string)}-${String(n.fret)}`}
+            key={keyOf(n)}
+            ref={(el) => {
+              if (el) dotRefs.current.set(keyOf(n), el);
+              else dotRefs.current.delete(keyOf(n));
+            }}
             className={`fret-dot${n.shown ? "" : " hidden"}${bare ? " bare" : ""}${onNote ? " playable" : ""}`}
-            role={n.shown ? "img" : undefined}
+            role={n.shown ? (onNote ? "button" : "img") : undefined}
             aria-label={n.shown ? n.aria : undefined}
             aria-hidden={n.shown ? undefined : true}
+            tabIndex={
+              n.shown && onNote
+                ? current && keyOf(current) === keyOf(n)
+                  ? 0
+                  : -1
+                : undefined
+            }
+            onFocus={() => {
+              setFocusKey(keyOf(n));
+            }}
+            onKeyDown={
+              n.shown
+                ? (e) => {
+                    onDotKey(e, n);
+                  }
+                : undefined
+            }
             style={{
               ...at(g.dot(n.fret), across(n.string)),
               ["--dot-d" as string]: `${String(fmt(g.dotSize(n.fret)))}px`,

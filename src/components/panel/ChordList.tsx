@@ -58,7 +58,6 @@ export function ChordList() {
             <button
               type="button"
               aria-pressed={primary.chord === c.symbol}
-              aria-label={`${spokenChord(c.symbol)}, chord ${String(c.degree)}${compare && shared.has(c.symbol) ? `, also in ${compare.tonic}` : ""}`}
               onClick={() => {
                 unlockAudio();
                 setFocusChord(
@@ -71,10 +70,11 @@ export function ChordList() {
             >
               <span className="numeral">
                 <Spelled text={c.numeral} />
-              </span>
+              </span>{" "}
               <span>
                 <Spelled text={chordLabel(c.symbol)} />
               </span>
+              <span className="sr-only">, {spokenChord(c.symbol)}</span>
               {compare && shared.has(c.symbol) && (
                 <span className="also">
                   also in <Spelled text={compare.tonic} />

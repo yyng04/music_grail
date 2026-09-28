@@ -98,7 +98,8 @@ type Tile = {
   key: string;
   name: ReactNode;
   sub: string;
-  label: string;
+  /** Said after the visible text, for screen readers ("B in the bass"). */
+  extra?: string;
   diagram?: ReactNode;
   pick: () => void;
 };
@@ -132,7 +133,6 @@ export function ShapeStrip({
         key: "whole",
         name: "Whole neck",
         sub: `frets 0 to ${String(frets)}`,
-        label: "Whole neck",
         pick: () => {
           setShapes({ position: null });
         },
@@ -141,7 +141,6 @@ export function ShapeStrip({
         key: p.name,
         name: `${p.name} shape`,
         sub: fretsText({ low: p.from, high: p.to }),
-        label: `${p.name} shape, ${fretsText({ low: p.from, high: p.to })}`,
         diagram: (
           <Diagram
             dots={model.positionDots[p.name] ?? []}
@@ -165,20 +164,20 @@ export function ShapeStrip({
       const pair = names.join(" + ");
       let name: ReactNode = <Spelled text={s.tag ?? pair} />;
       let sub = fretsText(s);
-      let label = `${s.tag ?? ""}, ${spokenName(s.bass ?? "")} in the bass, ${fretsText(s)}`;
+      let extra = `${spokenName(s.bass ?? "")} in the bass`;
       if (st.mode === "two") {
         name = <Spelled text={pair} />;
         sub = `${s.interval ?? ""}, ${fretsText(s)}`;
-        label = `${spokenName(names.join(" and "))}, ${INTERVAL_WORDS[s.interval ?? ""] ?? s.interval ?? ""}, ${fretsText(s)}`;
+        extra = `${spokenName(names.join(" and "))}, ${INTERVAL_WORDS[s.interval ?? ""] ?? s.interval ?? ""}`;
       } else if (st.mode === "guide") {
         name = <Spelled text={pair} />;
-        label = `${spokenName(names.join(" and "))} to ${spokenName(nextNames.join(" and "))}, ${fretsText(s)}`;
+        extra = `${spokenName(names.join(" and "))} to ${spokenName(nextNames.join(" and "))}`;
       }
       return {
         key: `${String(i)}-${String(s.low)}-${s.dots.map((d) => d.string).join("")}`,
         name,
         sub,
-        label,
+        extra,
         diagram: (
           <Diagram
             dots={s.dots}
@@ -239,7 +238,6 @@ export function ShapeStrip({
               type="button"
               className={`tile${i === lit ? " on" : ""}${t.diagram ? "" : " whole"}`}
               aria-pressed={i === lit}
-              aria-label={t.label}
               tabIndex={i === lit || (lit < 0 && i === 0) ? 0 : -1}
               onClick={() => {
                 unlockAudio();
@@ -248,8 +246,9 @@ export function ShapeStrip({
               }}
             >
               {t.diagram}
-              <span className="tile-name">{t.name}</span>
+              <span className="tile-name">{t.name}</span>{" "}
               <span className="tile-sub">{t.sub}</span>
+              {t.extra && <span className="sr-only">, {t.extra}</span>}
             </button>
           ))}
           {tiles.length === 0 && (

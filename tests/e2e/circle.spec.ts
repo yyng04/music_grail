@@ -101,7 +101,7 @@ test("a chord chip sets and clears the focus chord", async ({ page }) => {
   await settle(page);
   const chip = page
     .getByRole("region", { name: "Chords" })
-    .getByRole("button", { name: "G minor 7, chord 6" });
+    .getByRole("button", { name: /^vi7 Gm7\s*, G minor 7$/ });
   await chip.click();
   await expect(page).toHaveURL(/#p=Bb-major&pchord=G-m7$/);
   await chip.click();

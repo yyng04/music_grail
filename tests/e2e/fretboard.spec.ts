@@ -88,7 +88,7 @@ for (const setup of setups) {
 }
 
 const dot = (page: Page, name: string) =>
-  page.getByRole("img", { name, exact: true });
+  page.getByRole("button", { name, exact: true });
 
 test("the Fretboard tab opens the board and is kept in the URL", async ({
   page,
@@ -115,7 +115,7 @@ test("each dot names its exact pitch in the key's spelling", async ({
   await expect(dot(page, "B 3, string 3, fret 4")).toBeAttached();
   // Notes outside the key are hidden by default.
   await expect(
-    page.getByRole("img", { name: /string 1, fret 3$/ }),
+    page.getByRole("button", { name: /string 1, fret 3$/ }),
   ).toHaveCount(0);
 });
 

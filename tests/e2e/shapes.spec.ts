@@ -72,7 +72,7 @@ test("← / → and the strip's arrows step through the shapes", async ({
   await expect(page).toHaveURL(/shape=2/);
   await expect(
     shapes(page).getByRole("button", { pressed: true }),
-  ).toHaveAccessibleName(/^2nd inversion, D in the bass/);
+  ).toHaveAccessibleName(/^2nd inversion frets 7 to 8\s*, D in the bass$/);
   await page
     .getByRole("button", { name: "Previous shape, down the neck" })
     .click();
@@ -90,7 +90,7 @@ test("chord chips show another chord without leaving the board", async ({
   if (await fold.count()) await fold.click();
   await page
     .getByRole("group", { name: "Chord" })
-    .getByRole("button", { name: "A minor, chord 2" })
+    .getByRole("button", { name: /^ii Am\s*, A minor$/ })
     .click();
   await expect(page).toHaveURL(/pchord=A-m&/);
   await expect(title(page)).toContainText("A minor triad · strings G B E");
@@ -121,15 +121,18 @@ test("guide tones name their notes and state the real motion", async ({
   expect(labels.sort()).toEqual(["B", "E", "F♯"]);
 });
 
-test("every strip tile and chord button has a name", async ({ page }) => {
+test("every strip tile and chord button is named by its visible text", async ({
+  page,
+}) => {
   await page.goto("./#p=G-major&view=fretboard&show=triads");
   await settle(page);
+  // No aria-label: the visible text is the name, so voice control can say what it sees.
   for (const b of await page
     .locator(".tile, .chips button, .chords button")
-    .all())
-    expect((await b.getAttribute("aria-label"))?.length ?? 0).toBeGreaterThan(
-      3,
-    );
+    .all()) {
+    expect(((await b.textContent()) ?? "").length).toBeGreaterThan(3);
+    expect(await b.getAttribute("aria-label")).toBeNull();
+  }
 });
 
 test("the page never scrolls sideways in the shape modes", async ({ page }) => {

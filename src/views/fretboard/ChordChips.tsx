@@ -25,17 +25,17 @@ export function ChordChips({
           key={c.symbol}
           type="button"
           aria-pressed={c.symbol === value}
-          aria-label={`${spokenChord(c.symbol)}, chord ${String(c.degree)}`}
           onClick={() => {
             onPick(c.symbol);
           }}
         >
           <span className="chip-numeral">
             <Spelled text={c.numeral} />
-          </span>
+          </span>{" "}
           <span className="chip-name">
             <Spelled text={chordLabel(c.symbol)} />
           </span>
+          <span className="sr-only">, {spokenChord(c.symbol)}</span>
         </button>
       ))}
     </div>

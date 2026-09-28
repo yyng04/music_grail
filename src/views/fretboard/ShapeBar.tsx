@@ -177,8 +177,12 @@ export function ShapeBar({
             .filter((c) => c.symbol !== model.chord)
             .map((c) => ({
               value: c.symbol,
-              text: <Spelled text={chordLabel(c.symbol)} />,
-              label: spokenChord(c.symbol),
+              text: (
+                <>
+                  <Spelled text={chordLabel(c.symbol)} />
+                  <span className="sr-only">, {spokenChord(c.symbol)}</span>
+                </>
+              ),
             }))}
           value={model.next}
           onChange={(next) => {
