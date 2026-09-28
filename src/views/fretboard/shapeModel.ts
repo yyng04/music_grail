@@ -155,6 +155,8 @@ export type BoardModel = {
   lit: number;
   title: string;
   caption?: string;
+  /** Above the board: whose roles the colours (and numbers) show. */
+  reference: string;
   /** What the shape sounds like: pitches low to high, and the next chord's for guide tones. */
   sound: string[];
   soundNext: string[];
@@ -285,6 +287,19 @@ export const fretsText = (s: { low: number; high: number }) =>
     ? `fret ${String(s.low)}`
     : `frets ${String(s.low)} to ${String(s.high)}`;
 
+/**
+ * The reference line: whose roles the colours and numbers show. The
+ * focus chord's when one is set (its 7th form where a mode needs a 7th),
+ * otherwise the key's. Without numbers on the dots it speaks of colours only.
+ */
+function referenceLine(label: DotLabel, subject: string): string {
+  const what =
+    label === "degree" || label === "interval"
+      ? "Colours and numbers"
+      : "Colours";
+  return `${what}: roles in ${subject}`;
+}
+
 /** Pitches of some dots, low to high, spelled as the dots are. */
 const pitches = (dots: readonly Dot[], strings: readonly string[]) =>
   dots
@@ -383,6 +398,7 @@ export function boardModel(
       shapes: [],
       lit: -1,
       title: `${subject} · ${where}`,
+      reference: referenceLine(label, chord ? chordLabel(chord) : key),
       caption: chord
         ? `${chordLabel(chord)}: its chord tones glow, the key's other notes are dim.${counted}`
         : undefined,
@@ -441,6 +457,7 @@ export function boardModel(
   const lit = shapes.length ? Math.min(st.shape, shapes.length - 1) : -1;
   const shape = shapes[lit];
   const forced: DotLabel = st.mode === "guide" ? "note" : label;
+  const harmonyMode = st.mode === "two" && st.two === "harmony";
   const shapeDot = new Map<string, { dot: Dot; next: boolean }>();
   for (const d of shape?.next ?? [])
     shapeDot.set(`${String(d.string)}-${String(d.fret)}`, {
@@ -506,6 +523,13 @@ export function boardModel(
     shapes,
     lit,
     title: `${what} · ${detail}`,
+    // Harmony through the key colours by the key; the other modes by the chord they draw.
+    reference: referenceLine(
+      forced,
+      harmonyMode || !focus
+        ? key
+        : chordLabel(st.mode === "guide" ? chord : focus),
+    ),
     caption,
     sound: shape ? pitches(shape.dots, strings) : [],
     soundNext: shape?.next ? pitches(shape.next, strings) : [],

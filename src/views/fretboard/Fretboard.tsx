@@ -1,5 +1,6 @@
 import { boardInstrument, play, unlockAudio } from "../../audio/index.ts";
 import { useId } from "react";
+import { Spelled } from "../../components/Spelled.tsx";
 import { useMediaQuery } from "../../hooks/useMediaQuery.ts";
 import { useAppStore } from "../../state/index.ts";
 import { tuning } from "../../theory/index.ts";
@@ -38,6 +39,9 @@ export function Fretboard() {
         }}
         onStep={step}
       />
+      <p className="board-reference" aria-live="polite">
+        <Spelled text={model.reference} />
+      </p>
       <Board
         id={boardId}
         strings={strings}

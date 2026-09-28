@@ -1266,6 +1266,12 @@ ol {
   outline-offset: 3px;
   border-radius: 50%;
 }
+/* One plain line above the board: whose roles the colours and numbers show. */
+.board-reference {
+  padding: 8px 48px 0;
+  font-size: 14px;
+  color: var(--text-soft);
+}
 /* Room above the board for a position's name and arrows, and below for its letters. */
 .fretboard:not(.upright) .board-scroll {
   padding-top: 6px;
@@ -1419,6 +1425,10 @@ ol {
   }
   .strip-group {
     padding: 0 4px 2px;
+  }
+  .board-reference {
+    padding: 6px 16px 0;
+    font-size: 13px;
   }
   .board-settings {
     margin: 0 16px 12px;

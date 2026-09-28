@@ -80,3 +80,36 @@ describe("what each mode shows", () => {
     expect(triads.shapes.some((s) => s.low > 5)).toBe(true);
   });
 });
+
+describe("the reference line", () => {
+  it("names the key, or the focus chord, and says colours only without numbers", () => {
+    expect(model({}, { primary: G_MAJOR }).reference).toBe(
+      "Colours and numbers: roles in G major",
+    );
+    expect(model({}, { primary: { ...G_MAJOR, chord: "Em7" } }).reference).toBe(
+      "Colours and numbers: roles in Em7",
+    );
+    const notes = boardModel(
+      DEFAULT_SHAPES,
+      { primary: G_MAJOR },
+      GUITAR,
+      24,
+      "note",
+      false,
+    );
+    expect(notes.reference).toBe("Colours: roles in G major");
+  });
+
+  it("harmony through the key always colours by the key", () => {
+    const m = model(
+      { mode: "two", two: "harmony" },
+      { primary: { ...G_MAJOR, chord: "Em7" } },
+    );
+    expect(m.reference).toBe("Colours and numbers: roles in G major");
+  });
+
+  it("guide tones name the 7th chord they draw", () => {
+    const m = model({ mode: "guide" }, { primary: { ...G_MAJOR, chord: "G" } });
+    expect(m.reference).toBe("Colours: roles in Gmaj7");
+  });
+});
