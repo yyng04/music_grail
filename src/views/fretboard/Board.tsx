@@ -425,7 +425,8 @@ export function Board({
             }}
             className={`fret-dot${n.shown ? "" : " hidden"}${bare ? " bare" : ""}${onNote ? " playable" : ""}`}
             role={n.shown ? (onNote ? "button" : "img") : undefined}
-            aria-label={n.shown ? n.aria : undefined}
+            // An image takes no name from its content, so a dot that does not play keeps a label.
+            aria-label={n.shown && !onNote ? n.aria : undefined}
             aria-hidden={n.shown ? undefined : true}
             tabIndex={
               n.shown && onNote
@@ -465,6 +466,13 @@ export function Board({
               core
               small
             />
+            {/* The name starts with the visible label, then says the pitch and place. */}
+            {n.shown && (
+              <span className="sr-only">
+                {n.label ? ", " : ""}
+                {n.aria}
+              </span>
+            )}
           </span>
         ))}
         {model.held.map((h) => (

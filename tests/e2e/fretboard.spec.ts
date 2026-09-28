@@ -87,8 +87,11 @@ for (const setup of setups) {
   });
 }
 
+// A dot's name is its visible label (if any), then its pitch and place.
 const dot = (page: Page, name: string) =>
-  page.getByRole("button", { name, exact: true });
+  page.getByRole("button", {
+    name: new RegExp(`(^|, )${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+  });
 
 test("the Fretboard tab opens the board and is kept in the URL", async ({
   page,
@@ -125,14 +128,16 @@ test("dot labels switch between note, degree, interval and none", async ({
   await page.goto("./#p=G-major&view=fretboard");
   await settle(page);
   const low3 = dot(page, "G 2, root, string 6, fret 3");
-  await expect(low3).toHaveText("1");
+  await expect(low3.locator(".halo")).toHaveText("1");
   await page.getByRole("button", { name: "Note", exact: true }).click();
-  await expect(low3).toHaveText("G");
+  await expect(low3.locator(".halo")).toHaveText("G");
   await page.getByRole("button", { name: "Interval" }).click();
-  await expect(low3).toHaveText("R");
-  await expect(dot(page, "B 2, 3rd, string 5, fret 2")).toHaveText("M3");
+  await expect(low3.locator(".halo")).toHaveText("R");
+  await expect(
+    dot(page, "B 2, 3rd, string 5, fret 2").locator(".halo"),
+  ).toHaveText("M3");
   await page.getByRole("button", { name: "None", exact: true }).click();
-  await expect(low3).toHaveText("");
+  await expect(low3.locator(".halo")).toHaveText("");
 });
 
 test("settings change the instrument and show outside notes dimmed", async ({

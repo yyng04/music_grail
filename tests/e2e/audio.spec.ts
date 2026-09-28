@@ -46,7 +46,7 @@ test("sound on loads the guitar samples and plays clicks", async ({ page }) => {
     .toBe(17);
   expect(requests.some((u) => u.includes("/samples/bass/"))).toBe(false);
   await page
-    .getByRole("button", { name: /^G 4, root, string 1, fret 3/ })
+    .getByRole("button", { name: /G 4, root, string 1, fret 3/ })
     .click();
   await page.keyboard.press("ArrowRight");
   await page.getByRole("button", { name: "Circle" }).click();
@@ -87,7 +87,7 @@ test("a bass loads its own samples", async ({ page }) => {
   await expect
     .poll(() => requests.filter((u) => u.includes("/samples/bass/")).length)
     .toBe(11);
-  await page.getByRole("button", { name: /^B 0, .*string 5, open/ }).click();
+  await page.getByRole("button", { name: /B 0, .*string 5, open/ }).click();
   await page.waitForTimeout(500);
   expect(errors).toEqual([]);
 });

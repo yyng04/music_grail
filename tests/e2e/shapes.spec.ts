@@ -128,7 +128,9 @@ test("guide tones name their notes and state the real motion", async ({
   await expect(page.locator(".shape-caption")).toContainText(
     "B held, F♯ → E, a whole step down.",
   );
-  const labels = await page.locator(".fret-dot:not(.hidden)").allTextContents();
+  const labels = await page
+    .locator(".fret-dot:not(.hidden) .halo")
+    .allTextContents();
   expect(labels.sort()).toEqual(["B", "E", "F♯"]);
 });
 
