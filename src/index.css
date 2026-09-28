@@ -978,21 +978,56 @@ ol {
   user-select: none;
   -webkit-user-select: none;
 }
-.show-modes {
-  font-size: 18px;
-  gap: 6px 28px;
+/* The Show modes are tabs, a level above the settings: a hairline under the
+   row, the active tab brighter, heavier and underlined across its width. */
+.show-tabs {
+  display: flex;
+  gap: 0 32px;
+  border-bottom: 1px solid var(--line);
+  font-size: 19px;
 }
+.show-tabs [role="tab"] {
+  flex: none;
+  margin-bottom: -1px;
+  padding: 6px 0 9px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-weight: 300;
+  transition: color 0.2s var(--ease);
+}
+.show-tabs [role="tab"]:hover {
+  color: var(--text-soft);
+}
+.show-tabs [role="tab"][aria-selected="true"] {
+  color: var(--text);
+  font-weight: 500;
+  border-bottom-color: var(--text);
+}
+/* Settings: each group has a small plain label above its options. Groups wrap
+   onto new lines, and so do the options inside a group, so nothing runs off. */
 .shape-settings {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 10px 40px;
+  align-items: flex-start;
+  gap: 14px 40px;
+  min-width: 0;
 }
-.shape-options {
+.choice.stacked {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+.choice-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.choice.stacked .choice-options {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 10px 36px;
+  gap: 4px 16px;
   font-size: 15px;
 }
 .choice-note {
@@ -1067,14 +1102,23 @@ ol {
   color: var(--text-soft);
 }
 
-/* The strip: one tile per shape (or position) in neck order, arrows at the ends. */
+/* The strip: one tile per shape (or position) in neck order, arrows at the
+   ends, under a small plain label like the settings groups. */
+.strip-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 0 36px 2px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.strip-group > .choice-label {
+  padding-left: 12px;
+}
 .strip-bar {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 36px 2px;
-  user-select: none;
-  -webkit-user-select: none;
 }
 .strip-step {
   flex: none;
@@ -1165,7 +1209,6 @@ ol {
    the position as a glass window, guide-tone arrows and "held" marks. */
 .string-name,
 .slab-name,
-.pos-letter,
 .slab-step,
 .held {
   position: absolute;
@@ -1209,14 +1252,6 @@ ol {
   font-weight: 300;
   line-height: 28px;
   color: var(--text);
-}
-.pos-letter {
-  font-size: 15px;
-  color: var(--text-muted);
-}
-.pos-letter.on {
-  color: var(--text);
-  font-weight: 700;
 }
 .held {
   font-size: 12px;
@@ -1357,23 +1392,16 @@ ol {
     padding: 2px 16px 6px;
     gap: 8px;
   }
-  /* One line of modes that scrolls sideways, so the board starts sooner. */
-  .show-modes {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
+  /* The four tabs fit one line at this size, so the board starts sooner. */
+  .show-tabs {
     font-size: 15px;
-    gap: 6px 14px;
-    padding-bottom: 2px;
-  }
-  .show-modes button {
-    flex: none;
+    gap: 0 14px;
   }
   .shape-settings {
-    gap: 8px 24px;
+    gap: 10px 24px;
   }
-  .shape-options {
-    gap: 8px 24px;
+  .choice.stacked .choice-options {
+    gap: 4px 14px;
     font-size: 14px;
   }
   .chip-name {
@@ -1389,7 +1417,7 @@ ol {
   .shape-caption {
     font-size: 14px;
   }
-  .strip-bar {
+  .strip-group {
     padding: 0 4px 2px;
   }
   .board-settings {

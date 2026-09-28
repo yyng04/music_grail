@@ -23,6 +23,15 @@ export default defineConfig({
         viewport: { width: 390, height: 844 },
       },
     },
+    // Safari's engine, for layout only: the control bar must wrap there too.
+    {
+      name: "webkit",
+      testMatch: /layout\.spec\.ts/,
+      use: {
+        ...devices["Desktop Safari"],
+        viewport: { width: 1440, height: 900 },
+      },
+    },
   ],
   webServer: {
     command: `npm run build && npx vite preview --port ${String(port)} --strictPort`,

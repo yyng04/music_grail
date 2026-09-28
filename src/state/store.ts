@@ -1,6 +1,11 @@
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
-import { columnOf, columns, type ColumnSpellings } from "../relations/index.ts";
+import {
+  columnOf,
+  columns,
+  diatonicChords,
+  type ColumnSpellings,
+} from "../relations/index.ts";
 import { enharmonicKey, type Selection, type Target } from "../theory/index.ts";
 import type { HashView } from "./hash.ts";
 import {
@@ -43,6 +48,7 @@ export type AppState = {
   setFocusChord: (slot: Slot, chord: string | undefined) => void;
   /** Replaces the whole selection, e.g. from the URL hash. */
   setSelection: (selection: Selection) => void;
+  /** Chord size for the chord lists; the focus chord moves to the same degree in the new size. */
   setSevenths: (sevenths: boolean) => void;
   setAudioEnabled: (enabled: boolean) => void;
   armCompare: (armed: boolean) => void;
@@ -113,7 +119,27 @@ export function createAppStore(
       set({ selection: result.value });
     },
     setSevenths: (sevenths) => {
-      set({ sevenths });
+      const { selection } = get();
+      const { primary } = selection;
+      const degree = primary.chord
+        ? [true, false]
+            .map((size) =>
+              diatonicChords(primary, { sevenths: size }).findIndex(
+                (c) => c.symbol === primary.chord,
+              ),
+            )
+            .find((i) => i >= 0)
+        : undefined;
+      const chord =
+        degree === undefined
+          ? undefined
+          : diatonicChords(primary, { sevenths })[degree]?.symbol;
+      set({
+        sevenths,
+        ...(chord
+          ? { selection: { ...selection, primary: { ...primary, chord } } }
+          : {}),
+      });
     },
     setAudioEnabled: (audioEnabled) => {
       set({ audioEnabled });

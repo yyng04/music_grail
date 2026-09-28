@@ -6,8 +6,12 @@ import { ChordList } from "./ChordList.tsx";
 import { CompareBlock } from "./CompareBlock.tsx";
 import { NoteRow } from "./NoteRow.tsx";
 
-/** The selection spelled out: key, notes with roles and degrees, compare, chords. */
-export function Panel() {
+/**
+ * The selection spelled out: key, notes with roles and degrees, compare, and
+ * on the circle the chord list. On the fretboard the chords are picked above
+ * the board, so the list is left out there.
+ */
+export function Panel({ chords = true }: { chords?: boolean }) {
   const primary = useAppStore((s) => s.selection.primary);
   const kind = kindLabel(primary.kind);
   return (
@@ -28,7 +32,7 @@ export function Panel() {
         <NoteRow />
       </div>
       <CompareBlock />
-      <ChordList />
+      {chords && <ChordList />}
     </section>
   );
 }

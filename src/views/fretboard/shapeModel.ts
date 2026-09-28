@@ -17,7 +17,6 @@ import {
   guideToneMotion,
   halfStepLinks,
   harmonyShapes,
-  inWindow,
   labelReference,
   pairShapes,
   stringSets,
@@ -146,6 +145,9 @@ export type BoardModel = {
   positionDots: Record<string, Pick<Dot, "string" | "fret" | "role">[]>;
   sets: StringSet[];
   set?: StringSet;
+  /** Two-note chords: the pairs the chord offers, and the one shown. */
+  pairs: typeof PAIRS;
+  pair?: (typeof PAIRS)[number];
   /** The chord the mode shows (a triad in Triad shapes, a 7th chord otherwise). */
   chord: string;
   next?: string;
@@ -220,24 +222,45 @@ function defaultSet(st: ShapeState, sets: StringSet[]): StringSet | undefined {
   return sets[Math.min(pick, sets.length - 1)];
 }
 
-/** Which diatonic chord (0 to 6) the focus chord is; the tonic when none is set. */
-function focusDegree(sel: Selection): number {
+/** Which diatonic chord the focus chord is (1 to 7), in either size; undefined with none. */
+export function focusDegree(sel: Selection): number | undefined {
   const chord = sel.primary.chord;
-  if (!chord) return 0;
+  if (!chord) return undefined;
   for (const sevenths of [true, false]) {
-    const i = diatonicChords(sel.primary, { sevenths }).findIndex(
+    const found = diatonicChords(sel.primary, { sevenths }).find(
       (c) => c.symbol === chord,
     );
-    if (i >= 0) return i;
+    if (found) return found.degree;
   }
-  return 0;
+  return undefined;
 }
 
-/** The chord a mode shows: the focus chord's degree as a triad (Triad shapes) or a 7th chord. */
-export function modeChord(sel: Selection, mode: Mode): string {
+/**
+ * The chord a mode shows, from the focus chord's degree (the tonic with none):
+ * Triad shapes use the triad, guide tones the 7th chord, two-note chords the
+ * focus chord as it is (or the tonic chord in the chosen size).
+ */
+export function modeChord(
+  sel: Selection,
+  mode: Mode,
+  sevenths: boolean,
+): string {
   if (mode === "scale") return sel.primary.chord ?? "";
+  if (mode === "two")
+    return (
+      sel.primary.chord ??
+      diatonicChords(sel.primary, { sevenths })[0]?.symbol ??
+      ""
+    );
   const chords = diatonicChords(sel.primary, { sevenths: mode !== "triads" });
-  return chords[focusDegree(sel)]?.symbol ?? chords[0]?.symbol ?? "";
+  const degree = focusDegree(sel) ?? 1;
+  return chords[degree - 1]?.symbol ?? chords[0]?.symbol ?? "";
+}
+
+/** The pairs a chord has: every pair of its root, 3rd, 5th and 7th. */
+export function pairsOf(chord: string): typeof PAIRS {
+  const roles = new Set(chordTones(chord).map((t) => t.role));
+  return PAIRS.filter((p) => p.pair.every((r) => roles.has(r)));
 }
 
 /** The default next chord for guide tones: the diatonic 7th chord a 5th below (Am7 → D7). */
@@ -275,12 +298,17 @@ export function boardModel(
   frets: number,
   label: DotLabel,
   showOutside: boolean,
+  sevenths = true,
 ): BoardModel {
   const count = strings.length;
   const hasCompare = Boolean(sel.compare);
   const key = targetName(sel.primary);
   const positions = cagedPositions(sel.primary);
-  const position = positions.find((p) => p.name === st.position);
+  // A position belongs to Scale mode; the shape modes move along the neck with the strip.
+  const position =
+    st.mode === "scale"
+      ? positions.find((p) => p.name === st.position)
+      : undefined;
   const inPosition = (fret: number) =>
     !position || (fret >= position.from && fret <= position.to);
   const base: FretNote[] = fretboardNotes(sel, strings, frets);
@@ -311,7 +339,7 @@ export function boardModel(
   if (st.mode === "scale") {
     const chord = sel.primary.chord ?? "";
     const where = position
-      ? `${position.name} shape, ${fretsText({ low: position.from, high: position.to })}`
+      ? `${position.name} form, ${fretsText({ low: position.from, high: position.to })}`
       : "whole neck";
     const subject = sel.compare
       ? `${key} compared with ${targetName(sel.compare)}`
@@ -350,6 +378,7 @@ export function boardModel(
         (l) => inPosition(l.from) && inPosition(l.to),
       ),
       sets: [],
+      pairs: [],
       chord,
       shapes: [],
       lit: -1,
@@ -364,7 +393,13 @@ export function boardModel(
 
   const sets = setsFor(st, strings);
   const set = sets.find((s) => s.id === st.strings) ?? defaultSet(st, sets);
-  const chord = modeChord(sel, st.mode);
+  const chord = modeChord(sel, st.mode, sevenths);
+  // Said when the mode shows a different size of the focus chord ("the triad of Am7").
+  const focus = sel.primary.chord;
+  const derived = focus && focus !== chord ? focus : undefined;
+  const available = pairsOf(chord);
+  const pairInfo =
+    available.find((p) => p.pair.join() === st.pair.join()) ?? available[0];
   let all: Shape[] = [];
   let what = "";
   let caption: string | undefined;
@@ -377,14 +412,15 @@ export function boardModel(
     all = triadShapes(strings, set.strings, chordTones(chord), frets);
     const info = chordInfo(chord);
     const kind = info ? (TRIAD_WORDS[info.suffix] ?? info.suffix) : "";
-    what = `${info?.root ?? chord} ${kind} triad · strings ${set.name}`;
+    what = `${info?.root ?? chord} ${kind} triad${derived ? ` (the triad of ${chordLabel(derived)})` : ""} · strings ${set.name}`;
   } else if (st.mode === "two" && st.two === "pairs" && pair) {
     const tones = chordTones(chord);
-    const [a, b] = st.pair.map((r) => tones.find((t) => t.role === r));
-    const info = PAIRS.find((p) => p.pair.join() === st.pair.join());
+    const [a, b] = (pairInfo?.pair ?? []).map((r) =>
+      tones.find((t) => t.role === r),
+    );
     all = a && b ? pairShapes(strings, pair, a, b, frets) : [];
-    what = `${chordLabel(chord)} · ${info?.text ?? ""} · strings ${set?.name ?? ""}`;
-    caption = info?.caption;
+    what = `${chordLabel(chord)} · ${pairInfo?.text ?? ""} · strings ${set?.name ?? ""}`;
+    caption = pairInfo?.caption;
   } else if (st.mode === "two" && pair) {
     all = harmonyShapes(strings, sel.primary, STEPS[st.harmony], pair, frets);
     const skipped = strings[pair[0] + 1];
@@ -398,10 +434,10 @@ export function boardModel(
         : nextChord(sel, chord);
     all = guideShapes(strings, pair, chord, next, frets);
     what = `${chordLabel(chord)} → ${chordLabel(next)} · strings ${set?.name ?? ""}`;
-    caption = `${describeMotion(guideToneMotion(chord, next))} Solid notes are ${chordLabel(chord)}'s, dashed are ${chordLabel(next)}'s.`;
+    caption = `${describeMotion(guideToneMotion(chord, next))} Solid notes are ${chordLabel(chord)}'s, dashed are ${chordLabel(next)}'s.${derived ? ` Guide tones need a 7th, so ${chordLabel(derived)} is shown as ${chordLabel(chord)}.` : ""}`;
   }
 
-  const shapes = all.filter((s) => inWindow(s, position));
+  const shapes = all;
   const lit = shapes.length ? Math.min(st.shape, shapes.length - 1) : -1;
   const shape = shapes[lit];
   const forced: DotLabel = st.mode === "guide" ? "note" : label;
@@ -463,6 +499,8 @@ export function boardModel(
     links: [],
     sets,
     set,
+    pairs: available,
+    pair: pairInfo,
     chord,
     next,
     shapes,
@@ -485,6 +523,7 @@ export function modelOf(state: AppState): BoardModel {
     fretboard.frets,
     fretboard.label,
     fretboard.showOutside,
+    state.sevenths,
   );
 }
 
@@ -492,6 +531,7 @@ export function useBoardModel(): BoardModel {
   const selection = useAppStore((s) => s.selection);
   const fretboard = useAppStore((s) => s.fretboard);
   const shapes = useAppStore((s) => s.shapes);
+  const sevenths = useAppStore((s) => s.sevenths);
   return useMemo(
     () =>
       boardModel(
@@ -501,8 +541,9 @@ export function useBoardModel(): BoardModel {
         fretboard.frets,
         fretboard.label,
         fretboard.showOutside,
+        sevenths,
       ),
-    [shapes, selection, fretboard],
+    [shapes, selection, fretboard, sevenths],
   );
 }
 

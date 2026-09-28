@@ -1,4 +1,5 @@
 import { boardInstrument, play, unlockAudio } from "../../audio/index.ts";
+import { useId } from "react";
 import { useMediaQuery } from "../../hooks/useMediaQuery.ts";
 import { useAppStore } from "../../state/index.ts";
 import { tuning } from "../../theory/index.ts";
@@ -17,6 +18,7 @@ export function Fretboard() {
   const settings = useAppStore((s) => s.fretboard);
   const upright = useMediaQuery("(max-width: 600px)");
   const model = useBoardModel();
+  const boardId = useId();
   const strings = tuning(settings.instrument, settings.tuning).strings;
   const step = (dir: 1 | -1) => {
     stepStrip(dir);
@@ -24,14 +26,20 @@ export function Fretboard() {
   return (
     <div className={`fretboard${upright ? " upright" : ""}`}>
       <FretboardBar upright={upright} />
-      <ShapeBar model={model} compact={upright} />
+      <ShapeBar model={model} compact={upright} boardId={boardId} />
       <ShapeStrip
         model={model}
         strings={strings.length}
         frets={settings.frets}
+        orient={{
+          upright,
+          lowOnTop: settings.lowOnTop,
+          leftHanded: settings.leftHanded,
+        }}
         onStep={step}
       />
       <Board
+        id={boardId}
         strings={strings}
         frets={settings.frets}
         leftHanded={settings.leftHanded}

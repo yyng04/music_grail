@@ -44,14 +44,15 @@ for (const state of states) {
 }
 
 const title = (page: Page) => page.locator(".shape-title");
-const shapes = (page: Page) => page.getByRole("group", { name: "Shapes" });
+const shapes = (page: Page) =>
+  page.getByRole("group", { name: "Shapes along the neck" });
 
 test("the Show modes write the URL and title what the board shows", async ({
   page,
 }) => {
   await page.goto("./#p=G-major&view=fretboard");
   await settle(page);
-  await page.getByRole("button", { name: "Triad shapes" }).click();
+  await page.getByRole("tab", { name: "Triad shapes" }).click();
   await expect(page).toHaveURL(/show=triads/);
   await expect(title(page)).toHaveText(
     "G major triad · strings G B E · 1st inversion (B in the bass)",
@@ -90,10 +91,13 @@ test("chord chips show another chord without leaving the board", async ({
   if (await fold.count()) await fold.click();
   await page
     .getByRole("group", { name: "Chord" })
-    .getByRole("button", { name: /^ii Am\s*, A minor$/ })
+    .getByRole("button", { name: /^ii7 Am7\s*, A minor 7$/ })
     .click();
-  await expect(page).toHaveURL(/pchord=A-m&/);
-  await expect(title(page)).toContainText("A minor triad · strings G B E");
+  await expect(page).toHaveURL(/pchord=A-m7&/);
+  // A 7th chord in Triads uses its triad, and the title says so.
+  await expect(title(page)).toContainText(
+    "A minor triad (the triad of Am7) · strings G B E",
+  );
 });
 
 test("two-note chords by string pair, labelled by notes then interval", async ({

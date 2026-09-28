@@ -23,6 +23,7 @@ const fmt = (n: number) => Number(n.toFixed(2));
  * selection or the shape changes. A position is drawn as a glass window.
  */
 export function Board({
+  id,
   strings,
   frets,
   leftHanded,
@@ -32,6 +33,7 @@ export function Board({
   onStep,
   onNote,
 }: {
+  id?: string;
   strings: readonly string[];
   frets: number;
   leftHanded: boolean;
@@ -158,6 +160,7 @@ export function Board({
       ref={scroller}
     >
       <div
+        id={id}
         className="board"
         role="group"
         aria-label={`Fretboard: ${spokenName(model.subject)}`}
@@ -369,21 +372,6 @@ export function Board({
           </span>
         ))}
 
-        {/* Position view: the CAGED letters under the frets each position covers. */}
-        {position &&
-          model.positions.map((p) => (
-            <span
-              key={p.name}
-              className={`pos-letter${p.name === position.name ? " on" : ""}`}
-              aria-hidden="true"
-              style={at(
-                (winStart(p.from) + g.fret(p.to)) / 2,
-                upright ? g.numberRow : g.numberRow + 24,
-              )}
-            >
-              {p.name}
-            </span>
-          ))}
         {position && (
           <>
             <button
@@ -408,7 +396,7 @@ export function Board({
                   edgeIn - 26,
                 )}
               >
-                {position.name} shape
+                {position.name} form
               </span>
             )}
             <button

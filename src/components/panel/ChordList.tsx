@@ -17,21 +17,14 @@ export function ChordList() {
 
   // Switching size keeps the focus on the same degree (Gm7 ↔ Gm).
   const resize = (next: boolean) => {
-    if (next === sevenths) return;
-    const degree = chords.findIndex((c) => c.symbol === primary.chord);
-    setSevenths(next);
-    if (degree >= 0)
-      setFocusChord(
-        "primary",
-        diatonicChords(primary, { sevenths: next })[degree]?.symbol,
-      );
+    if (next !== sevenths) setSevenths(next);
   };
 
   return (
     <section aria-label="Chords">
       <div className="chord-head">
         <h2>Chords</h2>
-        <div className="size" role="group" aria-label="Chord size">
+        <div className="size" role="group" aria-label="Chord type">
           <button
             type="button"
             aria-pressed={!sevenths}
@@ -39,7 +32,7 @@ export function ChordList() {
               resize(false);
             }}
           >
-            Triads
+            3-note chords
           </button>
           <button
             type="button"
@@ -48,7 +41,7 @@ export function ChordList() {
               resize(true);
             }}
           >
-            Sevenths
+            7th chords
           </button>
         </div>
       </div>

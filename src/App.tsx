@@ -56,7 +56,7 @@ export function App() {
         {view === "fretboard" ? (
           <main className="main board-view">
             <Fretboard />
-            <Panel />
+            <Panel chords={false} />
           </main>
         ) : (
           <main className="main">
