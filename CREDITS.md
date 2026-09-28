@@ -4,7 +4,7 @@
 
 The samples in `public/samples/` are all dedicated to the public domain under
 [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/). No
-attribution is required; the sources are listed here so they can be checked.
+attribution is required. The sources are listed here so they can be checked.
 
 Each file was trimmed to about three seconds with a short fade-out, levelled so
 the notes play at a similar loudness, mixed to mono and encoded as 96 kbps MP3.
@@ -44,8 +44,8 @@ layer, first round robin.
 Black And Blue Basses by [Karoryfer Samples](https://www.karoryfer.com/): the
 "darkblack" hollowbody 5-string bass played with the fingers. Regular notes,
 mezzo-forte, first round robin. The library names its bass files an octave
-above the pitch they sound (its `b1` is the low B string, B0, 30.9 Hz); the
-files here are renamed to the sounding pitch.
+above the pitch they sound. Its `b1` is the low B string, B0 (30.9 Hz). The
+files here are renamed to the pitch they sound.
 
 - Source: <https://github.com/sfzinstruments/karoryfer.black-and-blue-basses>
 - Licence: CC0 1.0 Universal (the repository's `license` file)
