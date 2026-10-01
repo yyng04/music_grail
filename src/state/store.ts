@@ -1,4 +1,5 @@
 import { useStore } from "zustand";
+import { stylesFor } from "../audio/rhythm.ts";
 import { createStore } from "zustand/vanilla";
 import {
   columnOf,
@@ -17,6 +18,14 @@ import {
   saveFretboard,
   type FretboardSettings,
 } from "./fretboard.ts";
+import {
+  barsFor,
+  clampTempo,
+  DEFAULT_PROGRESSION,
+  STOPPED,
+  type Playback,
+  type ProgressionState,
+} from "./progression.ts";
 import {
   checkSelection,
   checkTarget,
@@ -40,6 +49,8 @@ export type AppState = {
   view: View;
   fretboard: FretboardSettings;
   shapes: ShapeState;
+  progression: ProgressionState;
+  playback: Playback;
 
   setPrimary: (target: Target) => void;
   setCompare: (target: Target) => void;
@@ -60,6 +71,9 @@ export type AppState = {
   setView: (view: View) => void;
   setFretboard: (settings: Partial<FretboardSettings>) => void;
   setShapes: (patch: Partial<ShapeState>) => void;
+  /** Bar counts, tempo and the shown chord are kept in range. */
+  setProgression: (patch: Partial<ProgressionState>) => void;
+  setPlayback: (patch: Partial<Playback>) => void;
 };
 
 function warnAll(warnings: readonly string[]) {
@@ -85,6 +99,8 @@ export function createAppStore(
     view: "circle",
     fretboard,
     shapes: DEFAULT_SHAPES,
+    progression: DEFAULT_PROGRESSION,
+    playback: STOPPED,
 
     setPrimary: (target) => {
       set({ selection: { ...get().selection, primary: checked(target) } });
@@ -168,6 +184,23 @@ export function createAppStore(
     },
     setShapes: (patch) => {
       set({ shapes: { ...get().shapes, ...patch } });
+    },
+    setProgression: (patch) => {
+      const next = { ...get().progression, ...patch };
+      // A drum style written for another time signature falls back to the click.
+      const fits = stylesFor(next.sig).some((s) => s.value === next.drums);
+      set({
+        progression: {
+          ...next,
+          drums: fits ? next.drums : "off",
+          bars: barsFor(next.bars, next.bars.length),
+          tempo: clampTempo(next.tempo),
+          current: Math.max(0, next.current),
+        },
+      });
+    },
+    setPlayback: (patch) => {
+      set({ playback: { ...get().playback, ...patch } });
     },
     // A new key or chord starts the shape stepping again from the lowest shape.
     setFretboard: (settings) => {

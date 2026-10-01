@@ -28,7 +28,10 @@ import {
   cellStates,
   columnOf,
   columns,
+  isDiatonic,
   keyForCell,
+  parseProgression,
+  progressionChords,
   noteArcs,
   noteRing,
   turn,
@@ -234,7 +237,24 @@ export function CircleOfFifths() {
     () => columns(selection, columnSpellings),
     [selection, columnSpellings],
   );
-  const states = useMemo(() => cellStates(selection, cols), [selection, cols]);
+  // In Progression mode the cell lit is the progression's current chord, when it is in the key.
+  const progressionChord = useAppStore((s) => {
+    if (s.shapes.mode !== "progression") return null;
+    const chords = progressionChords(parseProgression(s.progression.text));
+    const chord = chords[Math.min(s.progression.current, chords.length - 1)];
+    return chord && isDiatonic(chord, s.selection.primary) ? chord : "";
+  });
+  const states = useMemo(() => {
+    if (progressionChord === null) return cellStates(selection, cols);
+    const key = {
+      tonic: selection.primary.tonic,
+      kind: selection.primary.kind,
+    };
+    const primary = progressionChord
+      ? { ...key, chord: progressionChord }
+      : key;
+    return cellStates({ ...selection, primary }, cols);
+  }, [selection, cols, progressionChord]);
   const ring = useMemo(() => noteRing(selection), [selection]);
   const arcs = noteArcs(ring, Boolean(selection.compare));
   const hasCompare = Boolean(selection.compare);

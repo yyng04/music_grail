@@ -73,7 +73,7 @@ export function saveFretboard(settings: FretboardSettings): void {
   }
 }
 
-export type Mode = "scale" | "chords" | "two" | "guide";
+export type Mode = "scale" | "chords" | "two" | "guide" | "progression";
 export type Harmony = "3rds" | "6ths" | "4ths" | "octaves";
 export const HARMONIES: readonly Harmony[] = [
   "3rds",

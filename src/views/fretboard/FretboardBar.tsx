@@ -34,6 +34,7 @@ export function FretboardBar({ upright }: { upright: boolean }) {
   };
   // Guide tones always name their notes, so the label choice steps aside.
   const guide = useAppStore((s) => s.shapes.mode === "guide");
+  const progression = useAppStore((s) => s.shapes.mode === "progression");
 
   return (
     <>
@@ -124,7 +125,9 @@ export function FretboardBar({ upright }: { upright: boolean }) {
             }}
           />
           <Choice
-            name="Notes outside the key"
+            name={
+              progression ? "Notes outside the shell" : "Notes outside the key"
+            }
             options={[
               { value: false, text: "Hidden" },
               { value: true, text: "Dimmed" },

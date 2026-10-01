@@ -1468,3 +1468,437 @@ ol {
     right: 20px;
   }
 }
+
+/* ---------- Progression mode: entry and strip above the board ---------- */
+/* Five Show tabs: on phones the row scrolls sideways rather than wrap. */
+.show-tabs {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.progression-settings {
+  display: grid;
+  gap: 10px;
+}
+.prog-entry {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 520px;
+  max-width: 760px;
+  min-width: 0;
+}
+.entry-box {
+  position: relative;
+}
+.entry-field,
+.entry-mirror {
+  font: inherit;
+  font-size: 19px;
+  font-weight: 300;
+  line-height: 1.3;
+  padding: 4px 0 7px;
+  margin: 0;
+  width: 100%;
+  white-space: pre;
+}
+.entry-field {
+  position: relative;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  border-radius: 0;
+  color: var(--text);
+  outline: none;
+}
+.entry-field::placeholder {
+  color: var(--text-muted);
+}
+.entry-field:focus-visible {
+  border-bottom-color: var(--text);
+}
+/* A copy of the text behind the field, invisible except for the marks under unknown symbols. */
+.entry-mirror {
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  pointer-events: none;
+  overflow: hidden;
+}
+.entry-bad {
+  background: none;
+  color: transparent;
+  text-decoration: underline wavy var(--text-soft) 1px;
+  text-underline-offset: 7px;
+}
+.entry-note {
+  font-size: 14px;
+  color: var(--text-soft);
+}
+.prog-strip-group {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+/* Positioned, so the hidden spoken names stay inside the row when it scrolls. */
+.prog-strip {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 30px;
+}
+.strip-item {
+  display: grid;
+  justify-items: start;
+  gap: 1px;
+}
+.strip-chord {
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1.25;
+  color: var(--text-muted);
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s var(--ease);
+}
+.strip-chord:hover {
+  color: var(--text-soft);
+}
+.strip-chord[aria-disabled="true"] {
+  cursor: default;
+}
+.strip-item.next .strip-chord {
+  color: var(--text-soft);
+}
+.strip-item.on .strip-chord {
+  color: var(--text);
+  font-weight: 600;
+  border-bottom-color: var(--text);
+}
+.strip-item.bad .strip-chord {
+  color: var(--text-muted);
+}
+.strip-sub,
+.bar-step {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.bar-step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.bar-step button {
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--text-soft);
+  padding: 0 2px;
+}
+.bar-step button:hover {
+  color: var(--text);
+}
+.bar-step button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ---------- Progression mode: the player bar along the bottom ---------- */
+.main.board-view:has(.player-bar) {
+  padding-bottom: 110px;
+}
+.player-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  background: oklch(0.1 0.005 25 / 0.8);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line-strong);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.06);
+  padding-bottom: env(safe-area-inset-bottom);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 14px 34px;
+  padding: 14px 48px;
+}
+.player-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  padding: 14px 16px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.player-toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.player-toggle svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.prog-group {
+  display: grid;
+  gap: 4px;
+}
+/* Start flips to the light surface while playing, like a pressed control. */
+.prog-start {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 112px;
+  padding: 11px 20px;
+  border: 1px solid var(--line-strong);
+  font-size: 17px;
+  color: var(--text);
+  transition:
+    background-color 0.2s var(--ease),
+    color 0.2s var(--ease),
+    border-color 0.2s var(--ease);
+}
+.prog-start:hover {
+  border-color: var(--text);
+}
+.prog-start:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.prog-start svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+.prog-start[aria-pressed="true"] {
+  background: var(--flip);
+  border-color: var(--flip);
+  color: var(--flip-ink);
+}
+.prog-start.small {
+  min-width: 0;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+}
+.tempo {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.tempo > button:not(.tap) {
+  width: 22px;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--text-soft);
+}
+.tempo > button:not(.tap):hover {
+  color: var(--text);
+}
+.tempo > button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.tempo input {
+  width: 2.4em;
+  font: inherit;
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  padding: 0;
+  appearance: textfield;
+  -moz-appearance: textfield;
+  font-variant-numeric: tabular-nums;
+}
+.tempo input::-webkit-inner-spin-button,
+.tempo input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.tempo input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--text);
+}
+.unit {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.tap {
+  margin-left: 8px;
+  padding: 4px 14px;
+  border: 1px solid var(--line-strong);
+  font-size: 15px;
+  color: var(--text-soft);
+}
+.tap:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+.volumes {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 14px;
+  color: var(--text-soft);
+  min-height: 24px;
+}
+.volumes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.volumes input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 72px;
+  height: 18px;
+  margin: 0;
+  background: transparent;
+}
+.volumes input[type="range"]::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--line-strong);
+}
+.volumes input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -4.5px;
+  background: var(--text);
+  border: 0;
+  border-radius: 0;
+}
+.volumes input[type="range"]::-moz-range-track {
+  height: 1px;
+  background: var(--line-strong);
+}
+.volumes input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  background: var(--text);
+  border: 0;
+  border-radius: 0;
+}
+/* Bar and beat: words, then a square mark per beat, beat 1 taller, the current one filled. */
+.prog-beats {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  min-width: 150px;
+}
+.prog-beats.compact {
+  min-width: 0;
+}
+.beat-words {
+  font-size: 15px;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.beat-marks {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.mark {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--line-strong);
+}
+.mark.one {
+  height: 20px;
+}
+.mark.eighth {
+  width: 6px;
+  height: 8px;
+}
+.mark.on {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+@media (max-width: 760px) {
+  /* Only an end with more tabs behind it fades. */
+  .show-tabs[data-fade="start"] {
+    mask-image: linear-gradient(to right, transparent, #000 24px);
+  }
+  .show-tabs[data-fade="end"] {
+    mask-image: linear-gradient(to left, transparent, #000 24px);
+  }
+  .show-tabs[data-fade="both"] {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 24px,
+      #000 calc(100% - 24px),
+      transparent
+    );
+  }
+  .prog-entry {
+    flex-basis: 100%;
+  }
+  .entry-field,
+  .entry-mirror {
+    font-size: 16px;
+  }
+  .prog-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px 22px;
+    scrollbar-width: none;
+  }
+  .strip-chord {
+    font-size: 20px;
+  }
+  .main.board-view:has(.player-bar) {
+    padding-bottom: 90px;
+  }
+  .player-row {
+    gap: 12px;
+    padding: 10px 16px;
+  }
+  .player-row .unit {
+    display: none;
+  }
+  .beat-marks {
+    gap: 4px;
+  }
+  .mark {
+    width: 11px;
+    height: 11px;
+  }
+  .mark.one {
+    height: 16px;
+  }
+  .mark.eighth {
+    width: 5px;
+    height: 7px;
+  }
+  .tempo input {
+    font-size: 22px;
+  }
+}

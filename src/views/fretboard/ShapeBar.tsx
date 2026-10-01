@@ -1,11 +1,19 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Choice } from "../../components/Choice.tsx";
+import { scrollIntoRow } from "../../components/scroll.ts";
+import { useRowFades } from "../../hooks/useRowFades.ts";
 import { Spelled } from "../../components/Spelled.tsx";
 import { chordLabel, spokenChord } from "../../components/spelling.ts";
 import { diatonicChords } from "../../relations/index.ts";
-import { HARMONIES, useAppStore, type ShapeState } from "../../state/index.ts";
+import {
+  appStore,
+  HARMONIES,
+  useAppStore,
+  type ShapeState,
+} from "../../state/index.ts";
 import { chordPart, play, unlockAudio } from "../../audio/index.ts";
 import { ChordChips } from "./ChordChips.tsx";
+import { ProgressionBar } from "./ProgressionBar.tsx";
 import {
   focusDegree,
   MODES,
@@ -33,6 +41,8 @@ export function ShapeBar({
   const [open, setOpen] = useState(false);
   const settingsId = useId();
   const tabRefs = useRef(new Map<string, HTMLButtonElement>());
+  const tabRow = useRef<HTMLDivElement>(null);
+  useRowFades(tabRow);
   const st = useAppStore((s) => s.shapes);
   const setShapes = useAppStore((s) => s.setShapes);
   const selection = useAppStore((s) => s.selection);
@@ -44,8 +54,16 @@ export function ShapeBar({
   const set = (patch: Partial<ShapeState>) => {
     setShapes({ shape: 0, ...patch });
   };
+  const setProgression = useAppStore((s) => s.setProgression);
   const choose = (mode: ShapeState["mode"]) => {
     set({ mode, strings: null });
+    // An empty progression starts as ii V I in the key, so the board has something to show.
+    const { progression } = appStore.getState();
+    if (mode === "progression" && progression.text.trim() === "") {
+      const chords = diatonicChords(primary, { sevenths: true });
+      const text = [1, 4, 0].map((i) => chords[i]?.symbol ?? "").join(" ");
+      setProgression({ text, bars: [1, 1, 1], current: 0 });
+    }
   };
 
   // One place picks the focus chord on the fretboard: the chips, and the chord type beside them.
@@ -193,16 +211,28 @@ export function ShapeBar({
     );
 
   // Every mode has settings: the chord (except harmony through the key), then its own.
-  const settings = (
+  // Progression mode types its own chords instead of picking one.
+  const progression = st.mode === "progression";
+  const settings = progression ? (
+    <div className="progression-settings" id={settingsId}>
+      <ProgressionBar />
+    </div>
+  ) : (
     <div className="shape-settings" id={settingsId}>
       {chord}
       {options}
     </div>
   );
 
+  // On phones the tab row scrolls sideways; keep the chosen tab in view.
+  useEffect(() => {
+    const tab = tabRefs.current.get(st.mode);
+    if (tab?.parentElement) scrollIntoRow(tab.parentElement, tab, 24);
+  }, [st.mode]);
+
   return (
     <div className="shape-bar">
-      <div className="show-tabs" role="tablist" aria-label="Show">
+      <div className="show-tabs" role="tablist" aria-label="Show" ref={tabRow}>
         {MODES.map((m, i) => (
           <button
             key={m.value}
@@ -240,8 +270,8 @@ export function ShapeBar({
           </button>
         ))}
       </div>
-      {(!compact || open) && settings}
-      {compact ? (
+      {(!compact || open || progression) && settings}
+      {compact && !progression ? (
         <button
           type="button"
           className="shape-title fold"

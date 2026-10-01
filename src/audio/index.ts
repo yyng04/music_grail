@@ -44,7 +44,8 @@ export function unlockAudio(): void {
   if (context.state !== "running") void context.resume();
 }
 
-function loadTone() {
+/** Tone.js, loaded on first use and bound to the app's audio context. */
+export function loadTone() {
   tone ??= import("tone").then((T) => {
     if (context) T.setContext(context);
     return T;

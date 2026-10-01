@@ -486,9 +486,12 @@ export function Board({
                     g.dot(h.fret) + g.dotSize(h.fret) / 2 + 8,
                     across(h.string),
                   )
-                : at(
+                : // Under the note, or above it on the bottom string, clear of the fret numbers.
+                  at(
                     g.dot(h.fret),
-                    across(h.string) + g.dotSize(h.fret) / 2 + 9,
+                    across(h.string) +
+                      (place(h.string) === count - 1 ? -1 : 1) *
+                        (g.dotSize(h.fret) / 2 + 9),
                   )
             }
           >

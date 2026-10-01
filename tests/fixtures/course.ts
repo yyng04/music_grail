@@ -254,3 +254,84 @@ export const shellG7Sevenths = [
   { order: "R 3 7", strings: "E A D", seventh: ["F", 3] },
   { order: "R 3 7", strings: "A D G", seventh: ["F", 10] },
 ] as const;
+
+/** The owner's practice progression, checked by hand. */
+export const progression = {
+  text: "Amaj7 Adim7 G#m7 C#m7 F#m7 Fmaj7 Emaj7",
+  chords: ["Amaj7", "Adim7", "G#m7", "C#m7", "F#m7", "Fmaj7", "Emaj7"],
+  adim7: ["A", "C", "Eb", "Gb"],
+  /** R 7 3 shells with the root on the E string: [note, fret] on E, D, G. */
+  shellsR73OnE: [
+    {
+      chord: "Amaj7",
+      notes: [
+        ["A", 5],
+        ["G#", 6],
+        ["C#", 6],
+      ],
+    },
+    {
+      chord: "Am7b5",
+      notes: [
+        ["A", 5],
+        ["G", 5],
+        ["C", 5],
+      ],
+    },
+    {
+      chord: "Adim7",
+      notes: [
+        ["A", 5],
+        ["Gb", 4],
+        ["C", 5],
+      ],
+    },
+  ],
+  /** 3rd and 7th of each chord. */
+  guideTones: [
+    ["Amaj7", "C#", "G#"],
+    ["Adim7", "C", "Gb"],
+    ["G#m7", "B", "F#"],
+    ["C#m7", "E", "B"],
+    ["F#m7", "A", "E"],
+    ["Fmaj7", "A", "E"],
+    ["Emaj7", "G#", "D#"],
+  ],
+  /** How the 3rd and 7th move into the next chord, in semitones (0 is held). */
+  motion: [
+    {
+      from: "Amaj7",
+      to: "Adim7",
+      moves: [
+        ["C#", "C", -1],
+        ["G#", "Gb", -2],
+      ],
+    },
+    {
+      from: "Adim7",
+      to: "G#m7",
+      moves: [
+        ["C", "B", -1],
+        ["Gb", "F#", 0],
+      ],
+    },
+    {
+      from: "F#m7",
+      to: "Fmaj7",
+      moves: [
+        ["A", "A", 0],
+        ["E", "E", 0],
+      ],
+    },
+    {
+      from: "Fmaj7",
+      to: "Emaj7",
+      moves: [
+        ["A", "G#", -1],
+        ["E", "D#", -1],
+      ],
+    },
+  ],
+  /** Bars [2, 1, 1]: bars 0 to 4 show chords 0, 0, 1, 2, 0 (the loop starts again). */
+  schedule: { bars: [2, 1, 1], chords: [0, 0, 1, 2, 0] },
+} as const;

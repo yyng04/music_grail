@@ -18,8 +18,10 @@ Live demo: <https://yyng04.github.io/music_grail/>
 - Each note is coloured by its role (root, 3rd, 5th or 7th) in the key or in a chosen chord, and labelled by note name, degree or interval.
 - Shapes on the fretboard: the five CAGED positions, triads and their inversions on any three neighbouring strings, shell voicings (root, 3rd and 7th) in their four common forms, two-note chords, the key harmonised in 3rds, 6ths, 4ths or octaves, and the guide tones of one chord moving to the next.
 - A line above the fretboard says whether the colours and numbers show roles in the key or in the chosen chord.
+- A progression mode for practising between shell voicings: type chord symbols (any chords, in or out of the key), set how many bars each lasts, and the fretboard shows each chord's shell with hollow rings where the next chord's notes are, held notes marked. The shells are chosen so the hand moves as little as possible, or with the root on the 6th or 5th string.
+- A metronome for the progression, from 40 to 240 BPM with tap tempo, in 2/4, 3/4, 4/4, 6/8 or 12/8, with one bar of count-in and the board changing on each chord's first beat. Instead of the click it can play sampled drums: rock, swing or bossa in 4/4, a jazz waltz in 3/4, or a 6/8 groove. The app never plays the chords themselves.
 - Sampled guitar and bass sound, off by default. A note plays at its exact pitch, and a chord plays as an arpeggio and then together.
-- Notes are spelled as the key spells them, so E♯ in F♯ major stays E♯. The URL records the key, the compare key, the chord and the fretboard view, so any view can be shared as a link.
+- Notes are spelled as the key spells them, so E♯ in F♯ major stays E♯. The URL records the key, the compare key, the chord, the fretboard view and the progression with its tempo, time and drums, so any view can be shared as a link.
 - The keyboard reaches every control, and animation is turned off when the system asks for reduced motion.
 
 ## Stack
@@ -46,7 +48,7 @@ Other scripts:
 
 ## Credits
 
-- The guitar and bass samples come from [Karoryfer Samples](https://www.karoryfer.com/) (Shinyguitar and Black And Blue Basses), released under CC0. [CREDITS.md](CREDITS.md) lists every file and its source.
+- The guitar, bass and drum samples come from [Karoryfer Samples](https://www.karoryfer.com/) (Shinyguitar, Black And Blue Basses and Big Rusty Drums), released under CC0. [CREDITS.md](CREDITS.md) lists every file and its source.
 - Music theory from [Tonal](https://github.com/tonaljs/tonal) (MIT).
 - Sound from [Tone.js](https://github.com/Tonejs/Tone.js) (MIT).
 - Fonts: [Urbanist](https://github.com/coreyhu/Urbanist) and [Noto Music](https://github.com/notofonts/music) (SIL Open Font License).

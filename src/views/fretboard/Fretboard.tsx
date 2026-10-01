@@ -6,6 +6,7 @@ import { useAppStore } from "../../state/index.ts";
 import { tuning } from "../../theory/index.ts";
 import { Board } from "./Board.tsx";
 import { FretboardBar } from "./FretboardBar.tsx";
+import { PlayerBar } from "./PlayerBar.tsx";
 import { ShapeBar } from "./ShapeBar.tsx";
 import { stepStrip, useBoardModel } from "./shapeModel.ts";
 import { ShapeStrip } from "./ShapeStrip.tsx";
@@ -28,17 +29,20 @@ export function Fretboard() {
     <div className={`fretboard${upright ? " upright" : ""}`}>
       <FretboardBar upright={upright} />
       <ShapeBar model={model} compact={upright} boardId={boardId} />
-      <ShapeStrip
-        model={model}
-        strings={strings.length}
-        frets={settings.frets}
-        orient={{
-          upright,
-          lowOnTop: settings.lowOnTop,
-          leftHanded: settings.leftHanded,
-        }}
-        onStep={step}
-      />
+      {/* Progression mode has its own strip of chords above. */}
+      {model.mode !== "progression" && (
+        <ShapeStrip
+          model={model}
+          strings={strings.length}
+          frets={settings.frets}
+          orient={{
+            upright,
+            lowOnTop: settings.lowOnTop,
+            leftHanded: settings.leftHanded,
+          }}
+          onStep={step}
+        />
+      )}
       <p className="board-reference" aria-live="polite">
         <Spelled text={model.reference} />
       </p>
@@ -57,6 +61,7 @@ export function Fretboard() {
           play(boardInstrument(), [{ notes: [note.pitch], style: "note" }]);
         }}
       />
+      {model.mode === "progression" && <PlayerBar />}
     </div>
   );
 }

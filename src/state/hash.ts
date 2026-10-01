@@ -4,8 +4,19 @@ import {
   type Selection,
   type Target,
 } from "../theory/index.ts";
-import type { ShapeRole } from "../relations/index.ts";
+import { SIGS, STYLES } from "../audio/rhythm.ts";
+import {
+  parseProgression,
+  progressionChords,
+  type ShapeRole,
+} from "../relations/index.ts";
 import { DEFAULT_SHAPES, HARMONIES, type ShapeState } from "./fretboard.ts";
+import {
+  barsFor,
+  clampTempo,
+  DEFAULT_PROGRESSION,
+  type ProgressionState,
+} from "./progression.ts";
 import {
   checkSelection,
   DEFAULT_SELECTION,
@@ -87,6 +98,7 @@ export function formatHash(
   selection: Selection,
   view: HashView = "circle",
   shapes?: ShapeState,
+  progression?: ProgressionState,
 ): string {
   const { primary, compare } = selection;
   const params: [string, string][] = [["p", encodeKey(primary)]];
@@ -95,6 +107,8 @@ export function formatHash(
   if (compare?.chord) params.push(["cchord", encodeChord(compare.chord)]);
   if (view !== "circle") params.push(["view", view]);
   if (view === "fretboard" && shapes) params.push(...shapeParams(shapes));
+  if (view === "fretboard" && shapes?.mode === "progression" && progression)
+    params.push(...progressionParams(progression));
   return params.map(([k, v]) => `${k}=${v}`).join("&");
 }
 
@@ -120,6 +134,7 @@ function shapeParams(st: ShapeState): [string, string][] {
     st.mode === "two" ? st.two : st.mode === "chords" ? st.family : st.mode;
   const out: [string, string][] = [];
   if (show !== "scale") out.push(["show", show]);
+  if (show === "progression") return out;
   if (st.position) out.push(["pos", st.position]);
   if (show !== "scale" && st.strings) out.push(["strings", st.strings]);
   if (show !== "scale" && st.shape > 0)
@@ -140,7 +155,7 @@ export function parseShapes(hash: string): ShapeState {
     st.mode = "chords";
     st.family = show;
   }
-  if (show === "guide") st.mode = show;
+  if (show === "guide" || show === "progression") st.mode = show;
   if (show === "pairs" || show === "harmony") {
     st.mode = "two";
     st.two = show;
@@ -158,6 +173,64 @@ export function parseShapes(hash: string): ShapeState {
   const next = q.get("next");
   if (next) st.next = decodeChord(next);
   return st;
+}
+
+/**
+ * A progression chord in the hash: the root as in keys, then the rest of
+ * the symbol with anything a link cannot carry escaped (G#m7 → Gs-m7,
+ * Cmaj7#5 → C-maj7%235).
+ */
+export function encodeProgressionChord(symbol: string): string {
+  const info = chordInfo(symbol);
+  if (!info) throw new Error(`Cannot encode chord: ${symbol}`);
+  const rest = info.symbol.slice(info.root.length);
+  return `${encodeNote(info.root)}-${encodeURIComponent(rest || MAJOR_TRIAD)}`;
+}
+
+// Progression mode: chords, bars (when any chord has more than 1), bpm,
+// time ("3-4"), drums and root ("6" or "5"); defaults are left out.
+function progressionParams(p: ProgressionState): [string, string][] {
+  const chords = progressionChords(parseProgression(p.text));
+  const out: [string, string][] = [];
+  if (chords.length)
+    out.push(["chords", chords.map(encodeProgressionChord).join(",")]);
+  const bars = barsFor(p.bars, chords.length);
+  if (bars.some((b) => b !== 1)) out.push(["bars", bars.join(",")]);
+  if (p.tempo !== DEFAULT_PROGRESSION.tempo) out.push(["bpm", String(p.tempo)]);
+  if (p.sig !== DEFAULT_PROGRESSION.sig)
+    out.push(["time", p.sig.replace("/", "-")]);
+  if (p.drums !== DEFAULT_PROGRESSION.drums) out.push(["drums", p.drums]);
+  if (p.root !== "auto") out.push(["root", p.root.replace("th", "")]);
+  return out;
+}
+
+/**
+ * The progression settings named in a hash. Only the settings it names are
+ * returned, so the rest (and the text being typed) stay as they are.
+ */
+export function parseProgressionHash(hash: string): Partial<ProgressionState> {
+  const q = new URLSearchParams(hash.replace(/^#/, ""));
+  const out: Partial<ProgressionState> = {};
+  const chords = (q.get("chords") ?? "")
+    .split(",")
+    .flatMap((c) => decodeChord(c) ?? []);
+  if (chords.length) {
+    out.text = chords.join(" ");
+    const bars = (q.get("bars") ?? "").split(",").map(Number);
+    out.bars = barsFor(
+      bars.map((b) => (Number.isFinite(b) && b > 0 ? b : 1)),
+      chords.length,
+    );
+  }
+  const bpm = Number(q.get("bpm"));
+  if (q.has("bpm") && Number.isFinite(bpm)) out.tempo = clampTempo(bpm);
+  const sig = SIGS.find((s) => s === q.get("time")?.replace("-", "/"));
+  if (sig) out.sig = sig;
+  const drums = STYLES.find((s) => s.value === q.get("drums"));
+  if (drums) out.drums = drums.value;
+  const root = q.get("root");
+  if (root === "6" || root === "5") out.root = `${root}th`;
+  return out;
 }
 
 /** The view named in a hash; the circle when it names none or an unknown one. */

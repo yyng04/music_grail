@@ -64,9 +64,39 @@ files here are renamed to the pitch they sound.
 | `bass/B3.mp3`  | [`Samples/darkblack/reg/darkblack_b4_mf_rr1.wav`](https://github.com/sfzinstruments/karoryfer.black-and-blue-basses/blob/master/Samples/darkblack/reg/darkblack_b4_mf_rr1.wav)   |
 | `bass/Eb4.mp3` | [`Samples/darkblack/reg/darkblack_eb5_mf_rr1.wav`](https://github.com/sfzinstruments/karoryfer.black-and-blue-basses/blob/master/Samples/darkblack/reg/darkblack_eb5_mf_rr1.wav) |
 
+### Drums: 14 files, 7 sounds in two strengths
+
+Big Rusty Drums by [Karoryfer Samples](https://www.karoryfer.com/), a vintage
+Polish drum kit, recorded through the overhead microphones: kick, snare,
+cross-stick (side stick), closed, open and pedal hi-hat, and ride. Each sound
+has a soft and a loud hit, first round robin. These files are cut shorter than
+the instruments above: 1 second for the short sounds, 1.6 seconds for the open
+hi-hat and 2.5 seconds for the ride, each with a fade-out. All 14 files share
+one gain, so the soft and loud hits keep their recorded difference.
+
+- Source: <https://github.com/sfzinstruments/karoryfer.big-rusty-drums>
+- Licence: CC0 1.0 Universal (the repository's `LICENSE` file)
+
+| File                   | Source file                                                                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `drums/kick-soft.mp3`  | [`Samples/kick_24/kick/oh/k_vl7_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/kick_24/kick/oh/k_vl7_rr1.flac)                       |
+| `drums/kick.mp3`       | [`Samples/kick_24/kick/oh/k_vl13_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/kick_24/kick/oh/k_vl13_rr1.flac)                     |
+| `drums/snare-soft.mp3` | [`Samples/snare_14/center/oh/sn_center_vl5_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/snare_14/center/oh/sn_center_vl5_rr1.flac) |
+| `drums/snare.mp3`      | [`Samples/snare_14/center/oh/sn_center_vl9_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/snare_14/center/oh/sn_center_vl9_rr1.flac) |
+| `drums/cross-soft.mp3` | [`Samples/snare_14/sidestick/oh/sn_ss_vl2_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/snare_14/sidestick/oh/sn_ss_vl2_rr1.flac)   |
+| `drums/cross.mp3`      | [`Samples/snare_14/sidestick/oh/sn_ss_vl4_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/snare_14/sidestick/oh/sn_ss_vl4_rr1.flac)   |
+| `drums/hat-soft.mp3`   | [`Samples/hihat_14/cl/oh/ht_cl_vl3_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/hihat_14/cl/oh/ht_cl_vl3_rr1.flac)                 |
+| `drums/hat.mp3`        | [`Samples/hihat_14/cl/oh/ht_cl_vl5_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/hihat_14/cl/oh/ht_cl_vl5_rr1.flac)                 |
+| `drums/open-soft.mp3`  | [`Samples/hihat_14/open/oh/ht_open_vl3_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/hihat_14/open/oh/ht_open_vl3_rr1.flac)         |
+| `drums/open.mp3`       | [`Samples/hihat_14/open/oh/ht_open_vl5_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/hihat_14/open/oh/ht_open_vl5_rr1.flac)         |
+| `drums/pedal-soft.mp3` | [`Samples/hihat_14/chik/oh/ht_chik_vl2_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/hihat_14/chik/oh/ht_chik_vl2_rr1.flac)         |
+| `drums/pedal.mp3`      | [`Samples/hihat_14/chik/oh/ht_chik_vl4_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/hihat_14/chik/oh/ht_chik_vl4_rr1.flac)         |
+| `drums/ride-soft.mp3`  | [`Samples/ride_22/rd/oh/rd_vl5_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/ride_22/rd/oh/rd_vl5_rr1.flac)                         |
+| `drums/ride.mp3`       | [`Samples/ride_22/rd/oh/rd_vl9_rr1.flac`](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/blob/main/Samples/ride_22/rd/oh/rd_vl9_rr1.flac)                         |
+
 ## Software and fonts
 
 - [Tonal](https://github.com/tonaljs/tonal) (MIT): notes, intervals, scales and chords
-- [Tone.js](https://github.com/Tonejs/Tone.js) (MIT): the sampler that plays the sounds
+- [Tone.js](https://github.com/Tonejs/Tone.js) (MIT): the sampler that plays the sounds, and the metronome's clock
 - [Urbanist](https://github.com/coreyhu/Urbanist) (SIL Open Font License 1.1)
 - [Noto Music](https://github.com/notofonts/music) (SIL Open Font License 1.1): the ♯ and ♭ signs

@@ -14,8 +14,13 @@ import {
   diatonicChords,
   fretboardNotes,
   guideShapes,
+  chordAtBar,
   guideToneMotion,
   halfStepLinks,
+  heldVoices,
+  parseProgression,
+  progressionChords,
+  progressionVoicing,
   harmonyShapes,
   labelReference,
   pairShapes,
@@ -28,6 +33,7 @@ import {
   type Membership,
   type Move,
   type Position,
+  type ProgressionToken,
   type Role,
   type Shape,
   type ShapeRole,
@@ -35,17 +41,23 @@ import {
 } from "../../relations/index.ts";
 import {
   appStore,
+  barsFor,
+  STOPPED,
   useAppStore,
   type AppState,
   type DotLabel,
   type Harmony,
   type Mode,
+  type Playback,
+  type ProgressionState,
   type ShapeState,
 } from "../../state/index.ts";
 import {
   chordInfo,
   chroma,
+  degreeLabel,
   fretPitch,
+  intervalBetween,
   midi,
   octave,
   pitchClass,
@@ -60,6 +72,7 @@ export const MODES: { value: Mode; text: string }[] = [
   { value: "chords", text: "Chord shapes" },
   { value: "two", text: "Two-note chords" },
   { value: "guide", text: "Guide tones" },
+  { value: "progression", text: "Progression" },
 ];
 
 export const PAIRS: {
@@ -315,6 +328,173 @@ const pitches = (dots: readonly Dot[], strings: readonly string[]) =>
     .map((d) => respell(fretPitch(strings[d.string] ?? "E2", d.fret), d.name))
     .sort((a, b) => midi(a) - midi(b));
 
+/** A progression at this moment: its chords, bars, shells and which chord is current. */
+export type ProgressionNow = {
+  tokens: ProgressionToken[];
+  chords: string[];
+  bars: number[];
+  total: number;
+  shapes: (Shape | undefined)[];
+  index: number;
+  nextIndex: number;
+  /** Bar of the loop (from 0) on the display: where playback is, or the current chord's first bar. */
+  bar: number;
+};
+
+// The shells depend only on the chords, the tuning and the root string.
+let voicingCache: { key: string; shapes: (Shape | undefined)[] } | undefined;
+
+export function progressionNow(
+  p: ProgressionState,
+  playback: Playback,
+  strings: readonly string[],
+): ProgressionNow {
+  const tokens = parseProgression(p.text);
+  const chords = progressionChords(tokens);
+  const bars = barsFor(p.bars, chords.length);
+  const total = bars.reduce((a, b) => a + b, 0);
+  const key = `${chords.join(" ")}|${strings.join(" ")}|${p.root}`;
+  if (voicingCache?.key !== key)
+    voicingCache = { key, shapes: progressionVoicing(chords, strings, p.root) };
+  const index = playback.running
+    ? playback.countIn
+      ? 0
+      : chordAtBar(bars, playback.bar)
+    : Math.min(p.current, Math.max(0, chords.length - 1));
+  let bar = 0;
+  for (let i = 0; i < index; i++) bar += bars[i] ?? 0;
+  if (playback.running && !playback.countIn && total)
+    bar = playback.bar % total;
+  return {
+    tokens,
+    chords,
+    bars,
+    total,
+    shapes: voicingCache.shapes,
+    index,
+    nextIndex: chords.length ? (index + 1) % chords.length : 0,
+    bar,
+  };
+}
+
+/**
+ * Progression mode: the current chord's shell lit, the next chord's voices
+ * as plain rings in their role colours, and "held" where a voice stays.
+ * Other notes show dimmed only with "Notes outside" set to Dimmed.
+ */
+function progressionModel(
+  now: ProgressionNow,
+  sel: Selection,
+  strings: readonly string[],
+  frets: number,
+  label: DotLabel,
+  showOutside: boolean,
+): BoardModel {
+  const count = strings.length;
+  const current = now.chords[now.index];
+  const next = now.chords.length > 1 ? now.chords[now.nextIndex] : undefined;
+  const shape = now.shapes[now.index];
+  const nextShape = next ? now.shapes[now.nextIndex] : undefined;
+  const held = heldVoices(shape, nextShape);
+  const at = (d: { string: number; fret: number }) =>
+    `${String(d.string)}-${String(d.fret)}`;
+  const lit = new Map((shape?.dots ?? []).map((d) => [at(d), d]));
+  const isHeld = new Set(held.map(at));
+  const rings = new Map(
+    (nextShape?.dots ?? [])
+      .filter((d) => !isHeld.has(at(d)))
+      .map((d) => [at(d), d]),
+  );
+  const root = current ? chordInfo(current)?.root : undefined;
+  const notes: BoardNote[] = fretboardNotes(sel, strings, frets).map((n) => {
+    const d = lit.get(at(n)) ?? rings.get(at(n));
+    if (!d) {
+      const interval = root ? intervalBetween(root, n.name) : "P1";
+      const tone = { name: n.name, degree: degreeLabel(interval), interval };
+      return {
+        string: n.string,
+        fret: n.fret,
+        name: n.name,
+        pitch: n.pitch,
+        membership: "none" as const,
+        role: "outside" as const,
+        ring: false,
+        label: labelFor(label, tone),
+        shown: showOutside && current !== undefined,
+        aria: describe(
+          n.name,
+          n.pitch,
+          "outside",
+          n.string,
+          n.fret,
+          count,
+          "outside the shell",
+        ),
+      };
+    }
+    const ring = !lit.has(at(n));
+    const pitch = respell(fretPitch(strings[d.string] ?? "E2", d.fret), d.name);
+    const whose = ring ? (next ?? "") : (current ?? "");
+    return {
+      string: d.string,
+      fret: d.fret,
+      name: d.name,
+      pitch,
+      membership: "primary" as const,
+      role: d.role,
+      ring,
+      label: labelFor(label, d),
+      shown: true,
+      aria: describe(
+        d.name,
+        pitch,
+        d.role,
+        d.string,
+        d.fret,
+        count,
+        `of ${spokenName(chordLabel(whose))}${ring ? ", the next chord" : isHeld.has(at(d)) ? ", held into the next chord" : ""}`,
+      ),
+    };
+  });
+  const names = (shape?.dots ?? []).map((d) => d.name).join(" ");
+  const triad = shape?.dots.some((d) => d.role === "fifth") ?? false;
+  const title = current
+    ? `${chordLabel(current)} shell · ${shape ? `${shape.tag ?? ""} · ${names}` : "no shell within 12 frets"}`
+    : "Type chord symbols, separated by spaces";
+  const strip = new Set([
+    ...(shape?.dots ?? []).map((d) => d.string),
+    ...(nextShape?.dots ?? []).map((d) => d.string),
+  ]);
+  return {
+    mode: "progression",
+    notes,
+    links: [],
+    moves: [],
+    held,
+    positions: [],
+    positionDots: {},
+    sets: [],
+    pairs: [],
+    chord: current ?? "",
+    next,
+    shapes: [],
+    lit: -1,
+    active: strip.size ? [...strip] : undefined,
+    title,
+    caption: triad
+      ? `${chordLabel(current ?? "")} is a triad, so its 5th takes the 7th's place in the shell.`
+      : undefined,
+    reference: current
+      ? `${referenceLine(label, chordLabel(current))}${next ? `. Rings: ${chordLabel(next)}, the next chord.` : ""}`
+      : "",
+    sound: shape ? pitches(shape.dots, strings) : [],
+    soundNext: [],
+    subject: current
+      ? `${chordLabel(current)} shell${next ? `, with ${chordLabel(next)} next` : ""}`
+      : "no chords yet",
+  };
+}
+
 export function boardModel(
   st: ShapeState,
   sel: Selection,
@@ -323,7 +503,21 @@ export function boardModel(
   label: DotLabel,
   showOutside: boolean,
   sevenths = true,
+  progression?: { state: ProgressionState; playback: Playback },
 ): BoardModel {
+  if (st.mode === "progression")
+    return progressionModel(
+      progressionNow(
+        progression?.state ?? appStore.getState().progression,
+        progression?.playback ?? STOPPED,
+        strings,
+      ),
+      sel,
+      strings,
+      frets,
+      label,
+      showOutside,
+    );
   const count = strings.length;
   const hasCompare = Boolean(sel.compare);
   const key = targetName(sel.primary);
@@ -567,6 +761,7 @@ export function modelOf(state: AppState): BoardModel {
     fretboard.label,
     fretboard.showOutside,
     state.sevenths,
+    { state: state.progression, playback: state.playback },
   );
 }
 
@@ -575,6 +770,17 @@ export function useBoardModel(): BoardModel {
   const fretboard = useAppStore((s) => s.fretboard);
   const shapes = useAppStore((s) => s.shapes);
   const sevenths = useAppStore((s) => s.sevenths);
+  const progression = useAppStore((s) => s.progression);
+  const playback = useAppStore((s) => s.playback);
+  // While playing, the board only redraws when the chord changes, not every beat.
+  const index =
+    shapes.mode === "progression"
+      ? progressionNow(
+          progression,
+          playback,
+          tuning(fretboard.instrument, fretboard.tuning).strings,
+        ).index
+      : 0;
   return useMemo(
     () =>
       boardModel(
@@ -585,8 +791,10 @@ export function useBoardModel(): BoardModel {
         fretboard.label,
         fretboard.showOutside,
         sevenths,
+        { state: { ...progression, current: index }, playback: STOPPED },
       ),
-    [shapes, selection, fretboard, sevenths],
+    // The model reads the chord shown through `index` when playing.
+    [shapes, selection, fretboard, sevenths, progression, index],
   );
 }
 
@@ -626,6 +834,21 @@ export function playShape(): void {
 export function stepStrip(dir: 1 | -1): boolean {
   unlockAudio();
   const state = appStore.getState();
+  // Progression: with the metronome stopped, the next or previous chord, round the loop.
+  if (state.shapes.mode === "progression") {
+    if (state.playback.running) return false;
+    const { fretboard } = state;
+    const now = progressionNow(
+      state.progression,
+      state.playback,
+      tuning(fretboard.instrument, fretboard.tuning).strings,
+    );
+    const n = now.chords.length;
+    if (n === 0) return false;
+    state.setProgression({ current: (now.index + dir + n) % n });
+    playShape();
+    return true;
+  }
   const patch = stepPatch(state.shapes, modelOf(state), dir);
   if (patch) {
     state.setShapes(patch);
